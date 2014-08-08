@@ -20,12 +20,14 @@ class Module
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
 
-        $e->getApplication()->getEventManager()->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function($e) {
+        //Switch between layouts/templates if route has been matched
+        $eventManager->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function($e) {
             $controller      = $e->getTarget();
             $controllerClass = get_class($controller);
             $moduleNamespace = substr($controllerClass, 0, strpos($controllerClass, '\\'));
             $serviceManager  = $e->getApplication()->getServiceManager();
             $config          = $serviceManager->get('config');
+
             //switching between Layouts based on current module, as per config module_template_map array
             if (isset($config['module_template_map'][$moduleNamespace]['layout'])) {
                 $controller->layout($config['module_template_map'][$moduleNamespace]['layout']);
@@ -36,6 +38,48 @@ class Module
                 $templatePathResolver->setPaths(array($config['module_template_map'][$moduleNamespace]['template_path_stack']));
             }
         }, 100);
+
+        //Switch between layouts/templates if something went wrong (500,403,404)
+        $eventManager->attach( MvcEvent::EVENT_DISPATCH_ERROR, function( MvcEvent $e ){
+
+            $serviceManager  = $e->getApplication()->getServiceManager();
+            $config          = $serviceManager->get('config');
+            $path            = $e->getRequest()->getUri()->getPath();
+            $viewModel       = $e->getResult();
+            $layout          = $serviceManager->get( 'viewManager' )->getViewModel();
+
+            //Default error layout & template are set as per module_template_map array "Application"
+            $layout->setTemplate($config['module_template_map']['Application']['layout'] );
+            $viewModel->setVariables( array( ) )->setTemplate($config['module_template_map']['Application']['exception_template']);
+
+            //Loop through modules (module_template_map array) to override template & layout
+            foreach ($config['module_template_map'] as $module => $module_conf) {
+                if (
+                    array_key_exists('url_regexp', $module_conf)
+                    &&
+                    !empty($module_conf['url_regexp'])
+                    &&
+                    preg_match($module_conf['url_regexp'], $path)
+                ) {
+                    $layout->setTemplate( $module_conf['layout'] );
+
+                    switch ($e->getResponse()->getStatusCode()) {
+                        case '500':
+                            if (array_key_exists('exception_template', $module_conf) && !empty($module_conf['exception_template'])) {
+                                $viewModel->setVariables( array( ) )->setTemplate( $module_conf['exception_template'] );
+                            }
+                            break;
+                        case '404':
+                        case '403':
+                        default:
+                            if (array_key_exists('exception_template', $module_conf) && !empty($module_conf['exception_template'])) {
+                                $viewModel->setVariables( array( ) )->setTemplate( $module_conf['exception_template'] );
+                            }
+                            break;
+                    }
+                }
+            }
+        });
     }
 
     public function getConfig()

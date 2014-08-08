@@ -51,14 +51,15 @@ return array(
         'Administration' => array(
             'layout'              => 'layout/admin/layout',
             'template_path_stack' => __DIR__ . '/../view',
-            'not_found_template'       => 'error/404',
-            'exception_template'       => 'error/index',
+            'not_found_template'       => 'error/admin/404',
+            'exception_template'       => 'error/admin/index',
+            'url_regexp'               => '|^/admin.*$|'
         ),
         'Application'    => array(
             'layout'              => 'layout/app/layout',
             'template_path_stack' => __DIR__ . '/../../Application/view',
-            'not_found_template'       => 'error/404',
-            'exception_template'       => 'error/index',
+            'not_found_template'       => 'error/app/404',
+            'exception_template'       => 'error/app/index',
         )
     ),
     'view_manager' => array(
@@ -70,8 +71,10 @@ return array(
         'template_map' => array(
             'layout/admin/layout'     => __DIR__ . '/../view/layout/layout.phtml',
             'layout/app/layout'       => __DIR__ . '/../../Application/view/layout/layout.phtml',
-            'error/404'               => __DIR__ . '/../view/error/404.phtml',
-            'error/index'             => __DIR__ . '/../view/error/index.phtml',
+            'error/admin/404'         => __DIR__ . '/../view/error/404.phtml',
+            'error/app/404'           => __DIR__ . '/../../Application/view/error/404.phtml',
+            'error/admin/index'       => __DIR__ . '/../view/error/index.phtml',
+            'error/app/index'         => __DIR__ . '/../../Application/view/error/index.phtml',
         ),
         'template_path_stack' => array(
             __DIR__ . '/../view',
