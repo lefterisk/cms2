@@ -19,6 +19,25 @@ return array(
                         'action'     => 'index',
                     ),
                 ),
+                'may_terminate' => true,
+                'child_routes' => array(
+                    'model' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => '/model/:model[/parent/:parent][/item/:item][/action/:action]',
+                            'constraints' => array(
+                                'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                'parent'        => '[0-9]*',
+                                'item'          => '[0-9_-]*',
+                                'action' => '(index|add|edit|save|delete|delete-multiple)',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Administration\Controller\Model',
+                                'action' => 'index'
+                            )
+                        )
+                    )
+                )
             ),
         ),
     ),
@@ -43,7 +62,8 @@ return array(
     ),
     'controllers' => array(
         'invokables' => array(
-            'Administration\Controller\Index' => 'Administration\Controller\IndexController'
+            'Administration\Controller\Index' => 'Administration\Controller\IndexController',
+            'Administration\Controller\Model' => 'Administration\Controller\ModelController',
         ),
     ),
     // Configuration so that we have different layouts for different modules - combined with Module.php onBootstrap
@@ -78,6 +98,9 @@ return array(
         ),
         'template_path_stack' => array(
             __DIR__ . '/../view',
+        ),
+        'strategies' => array(
+            'ViewJsonStrategy',
         ),
     ),
     // Placeholder for console routes

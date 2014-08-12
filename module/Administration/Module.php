@@ -62,7 +62,6 @@ class Module
                     preg_match($module_conf['url_regexp'], $path)
                 ) {
                     $layout->setTemplate( $module_conf['layout'] );
-
                     switch ($e->getResponse()->getStatusCode()) {
                         case '500':
                             if (array_key_exists('exception_template', $module_conf) && !empty($module_conf['exception_template'])) {
@@ -72,8 +71,8 @@ class Module
                         case '404':
                         case '403':
                         default:
-                            if (array_key_exists('exception_template', $module_conf) && !empty($module_conf['exception_template'])) {
-                                $viewModel->setVariables( array( ) )->setTemplate( $module_conf['exception_template'] );
+                            if (array_key_exists('not_found_template', $module_conf) && !empty($module_conf['not_found_template'])) {
+                                $viewModel->setVariables( array( ) )->setTemplate( $module_conf['not_found_template'] );
                             }
                             break;
                     }
@@ -94,6 +93,18 @@ class Module
                 'namespaces' => array(
                     __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__,
                 ),
+            ),
+        );
+    }
+
+    public function getServiceConfig()
+    {
+        return array(
+            'factories' => array(
+                'DbAdapter' => function ($sm) {
+                    $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
+                    return $dbAdapter;
+                },
             ),
         );
     }
