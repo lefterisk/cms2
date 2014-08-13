@@ -5,8 +5,8 @@
 return array(
     "model_name"     => "Example",
     "table_name"     => "example",
-    "prefix"         => "",
-    "is_stand_alone" => "",
+    "prefix"         => "example_",
+    "is_stand_alone" => false,
     "fields" => array(
         "dates"                   => array(),
         "booleans"                => array(),
@@ -16,11 +16,18 @@ return array(
         "integers"                => array(),
         "files"                   => array(),
         "custom_selections"       => array(
-            array(
-                "field_name"        => "",
+            "field_name" => array(
                 "options"           => array("key" => "value"),
                 "multiple"          => false,
                 "lookup_table_name" => ""
+            )
+        ),
+        "relations" => array(
+            "field_name" => array(
+                "related_model"     => "",
+                "relation_type"     => "", // 'oneToMany', 'manyToOne', 'manyToMany'
+                "fields_for_select" => array(),
+                "lookup_table_name" => "",
             )
         ),
         "multilingual_varchars"   => array(),
@@ -28,15 +35,7 @@ return array(
         "multilingual_long_texts" => array(),
         "multilingual_files"      => array(),
     ),
-    "relations" => array(
-        array(
-            "related_model"     => "",
-            "relationship_type" => "", // 'oneToMany', 'manyToOne', 'manyToMany'
-            "fields_for_select" => array(),
-            "lookup_table_name" => "",
-        )
-    ),
-    "max_tree_depth"  => "0",
+    "max_tree_depth"  => 0,
     "listing_fields"  => array(),
     "required_fields" => array(),
     "form_manager"    => array(),

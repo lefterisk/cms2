@@ -9,28 +9,27 @@
 
 namespace Administration\Controller;
 
+use Administration\Helper\ModelHandler;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
-use Zend\Code\Scanner\DirectoryScanner;
 
 
 class ModelController extends AbstractActionController
 {
-    protected $errors;
+    protected $errors = array();
 
     public function indexAction()
     {
         $requested_model = $this->params()->fromRoute('model');
-        if (!array_key_exists($requested_model, $this->getAvailableModels())) {
-            $this->getResponse()->setStatusCode(404);
-            return;
-        }
 
-        try {
-            $model = $this->initialiseModel($requested_model);
-        }
-        catch (\Exception $ex) {
-            echo 'Catch Top';
+        $model = new ModelHandler($requested_model);
+        if (!$model->isInitialised()) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            $viewModel       = new ViewModel(array(
+                'modelName'  =>  $requested_model,
+                'errors' => $this->errors
+            ));
+            return $viewModel->setTemplate('error/admin/model');
         }
 
         return new ViewModel();
@@ -59,63 +58,5 @@ class ModelController extends AbstractActionController
     public function deleteMultipleAction()
     {
         return true;
-    }
-
-    private function initialiseModel($model)
-    {
-        $modelsArray          = $this->getAvailableModels();
-        $modelDefinitionArray = require($modelsArray[$model]);
-
-        try {
-            $this->validateModel($modelDefinitionArray);
-        }
-        catch (\Exception $ex) {
-            $this->errors[] = 'Could not instantiate model';
-            return false;
-        }
-
-
-
-    }
-
-    /**
-     * Validates model config array
-     * @param $model = configuration array
-     * @throws \Exception
-     */
-    private function validateModel($model)
-    {
-        $mandatorySettings = array(
-            'model_name',
-            'table_name',
-            'prefix',
-        );
-
-        foreach ($mandatorySettings as $setting) {
-            if (!array_key_exists($setting, $model) || empty($model[$setting])) {
-                $error = 'Missing "'. $setting . '" definition in model config ';
-                $this->errors[] = $error;
-                throw new \Exception($error);
-            }
-        }
-    }
-
-    /**
-     * Scans the models directory
-     * @return array of available models
-     */
-    private function getAvailableModels()
-    {
-        if (empty($this->availableModelsArray)) {
-            $scanner = new DirectoryScanner(__DIR__ . '/../Model/');
-            $this->availableModelsArray = array();
-            if (is_array($scanner->getFiles())) {
-                foreach ($scanner->getFiles() as $model) {
-                    $file = explode('/', $model);
-                    $this->availableModelsArray[str_replace('.php', '', array_pop($file))] = $model;
-                }
-            }
-        }
-        return $this->availableModelsArray;
     }
 }

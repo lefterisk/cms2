@@ -94,6 +94,7 @@ return array(
             'error/admin/404'         => __DIR__ . '/../view/error/404.phtml',
             'error/app/404'           => __DIR__ . '/../../Application/view/error/404.phtml',
             'error/admin/index'       => __DIR__ . '/../view/error/index.phtml',
+            'error/admin/model'       => __DIR__ . '/../view/administration/model/error.phtml',
             'error/app/index'         => __DIR__ . '/../../Application/view/error/index.phtml',
         ),
         'template_path_stack' => array(
