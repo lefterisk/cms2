@@ -24,8 +24,8 @@ return array(
         ),
         "relations" => array(
             "field_name" => array(
-                "related_model"     => "",
-                "relation_type"     => "", // 'oneToMany', 'manyToOne', 'manyToMany'
+                "related_model"     => "sss",
+                "relation_type"     => "oneToMany", // 'oneToMany', 'manyToOne', 'manyToMany'
                 "fields_for_select" => array(),
                 "lookup_table_name" => "",
             )
@@ -38,6 +38,10 @@ return array(
     "max_tree_depth"  => 0,
     "listing_fields"  => array(),
     "required_fields" => array(),
-    "form_manager"    => array(),
+    "form_manager"    => array(
+        "tab_name" => array(
+            "field_name"
+        )
+    ),
     "input_filters"   => array()
 );

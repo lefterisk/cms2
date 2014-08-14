@@ -1,12 +1,14 @@
 <?php
 namespace Administration\Helper;
 
+use Administration\Helper\Validator\ModelValidator;
 use Zend\Code\Scanner\DirectoryScanner;
 
 class ModelHandler
 {
     protected $errors      = array();
     protected $initialised = false;
+    protected $availableModelsArray = array();
 
     public function __construct($model)
     {
@@ -26,7 +28,7 @@ class ModelHandler
         $modelValidator = new ModelValidator($modelDefinitionArray);
 
         if (!$modelValidator->validate()) {
-            $this->errors = $modelValidator->getErrors();
+            $this->errors = array_merge($this->errors, $modelValidator->getErrors());
             return;
         }
 
