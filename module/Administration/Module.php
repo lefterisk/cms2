@@ -11,6 +11,8 @@ namespace Administration;
 
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
+use Zend\Session\Container;
+
 
 class Module
 {
@@ -79,6 +81,18 @@ class Module
                 }
             }
         });
+
+        //Locale setup
+        $session      = $e->getApplication()->getServiceManager()->get('Session');
+//        if (!$session->locale || !$controlPanel->isValidAdminLocale($session->locale)) {
+//            $session->locale = $controlPanel->getDefaultAdminLocale();
+//        }
+//
+//        if ($e->getRouteMatch()->getParam('language') && $controlPanel->isValidAdminLocale($e->getRouteMatch()->getParam('language'))) {
+//            $session->locale = $e->getRouteMatch()->getParam('language');
+//        }
+//
+//        $e->getApplication()->getServiceManager()->get('translator')->setLocale($session->locale);
     }
 
     public function getConfig()
@@ -102,8 +116,11 @@ class Module
         return array(
             'factories' => array(
                 'DbAdapter' => function ($sm) {
-                    $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
-                    return $dbAdapter;
+                        $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
+                        return $dbAdapter;
+                    },
+                'Session' => function ($sm) {
+                    return new Container();
                 },
             ),
         );

@@ -3,10 +3,9 @@
  *Example configuration array for a model
  */
 return array(
-    "model_name"     => "Example",
-    "table_name"     => "example",
-    "prefix"         => "example_",
-    "is_stand_alone" => false,
+    "model"       => "example",
+    "prefix"      => "example_",
+    "stand_alone" => false,
     "fields" => array(
         "dates"                   => array(),
         "booleans"                => array(),
@@ -28,7 +27,7 @@ return array(
                 "relation_type"     => "oneToMany", // 'oneToMany', 'manyToOne', 'manyToMany'
                 "fields_for_select" => array(),
                 "lookup_table_name" => "",
-            )
+            ),
         ),
         "multilingual_varchars"   => array(),
         "multilingual_texts"      => array(),
@@ -43,5 +42,6 @@ return array(
             "field_name"
         )
     ),
-    "input_filters"   => array()
+    "input_filters"   => array(),
+    "action_manager" => ""
 );

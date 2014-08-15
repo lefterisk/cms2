@@ -4,15 +4,13 @@ namespace Administration\Helper\Validator;
 class ModelValidator extends AbstractValidator
 {
     protected $requiredModelSettings = array(
-        'model_name',
-        'table_name',
+        'model',
         'prefix',
     );
     protected $modelSettings         = array(
-        'model_name'      => 'string',
-        'table_name'      => 'string',
+        'model'           => 'string',
         'prefix'          => 'string',
-        'is_stand_alone'  => 'boolean',
+        'stand_alone'     => 'boolean',
         'fields'          => 'array',
         'max_tree_depth'  => 'int',
         'listing_fields'  => 'array',
