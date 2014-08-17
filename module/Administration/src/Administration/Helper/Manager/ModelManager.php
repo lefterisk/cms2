@@ -6,6 +6,7 @@ class ModelManager
     private $model = '';
     private $prefix = '';
     private $stand_alone = false;
+    private $model_db_sync = false;
     private $max_tree_depth = 0;
     private $listing_fields = array();
     private $required_fields = array();
@@ -30,6 +31,7 @@ class ModelManager
         'model',
         'prefix',
         'stand_alone',
+        'model_db_sync',
         'max_tree_depth',
         'listing_fields',
         'required_fields',
@@ -216,7 +218,6 @@ class ModelManager
             $this->multilingual_texts,
             $this->multilingual_long_texts,
             $this->multilingual_files,
-            $this->getFileCaptions(),
             $this->getMultilingualFilesCaptions()
         );
     }
@@ -256,9 +257,48 @@ class ModelManager
         );
     }
 
+    public function getMainTableColumns()
+    {
+        $fields = array(
+            'id'      => array('id'),
+            'date'    => $this->dates,
+            'varchar' => array_merge($this->varchars, $this->files, $this->getFileCaptions()),
+            'boolean' => $this->booleans,
+            'integer' => $this->integers,
+            'text'    => array_merge($this->texts,$this->long_texts),
+        );
+        $columnsWithTypes = array();
+        foreach ($fields as $type => $columns) {
+            foreach ($columns as $column) {
+                $columnsWithTypes[$column] = $type;
+            }
+        }
+        return $columnsWithTypes;
+    }
+
+    public function getMainTableExchangeArrayFields()
+    {
+        $fields = array_merge(
+            array('id'),
+            $this->dates,
+            $this->varchars,
+            $this->booleans,
+            $this->integers,
+            $this->texts,
+            $this->long_texts,
+            $this->files,
+            $this->getFileCaptions()
+        );
+        return $fields;
+    }
     public function getMaximumTreeDepth()
     {
         return $this->max_tree_depth;
+    }
+
+    public function getModelDbTableSync()
+    {
+        return $this->model_db_sync;
     }
 
     public function getActionManagers()

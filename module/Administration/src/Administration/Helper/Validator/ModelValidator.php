@@ -11,6 +11,7 @@ class ModelValidator extends AbstractValidator
         'model'           => 'string',
         'prefix'          => 'string',
         'stand_alone'     => 'boolean',
+        'model_db_sync'   => 'boolean',
         'fields'          => 'array',
         'max_tree_depth'  => 'int',
         'listing_fields'  => 'array',

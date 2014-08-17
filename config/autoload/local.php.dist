@@ -12,4 +12,9 @@
  */
 
 return array(
+    'db' => array(
+        'dsn'            => 'mysql:dbname=WhAtEvEr;host=localhost',
+        'username' => 'YOUR USERNAME HERE',
+        'password' => 'YOUR PASSWORD HERE',
+    )
 );

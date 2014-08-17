@@ -21,8 +21,7 @@ class ModelController extends AbstractActionController
     public function indexAction()
     {
         $requested_model = $this->params()->fromRoute('model');
-
-        $model = new ModelHandler($requested_model);
+        $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
             $viewModel       = new ViewModel(array(
