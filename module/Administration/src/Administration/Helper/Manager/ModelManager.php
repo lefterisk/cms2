@@ -291,6 +291,7 @@ class ModelManager
         );
         return $fields;
     }
+
     public function getMaximumTreeDepth()
     {
         return $this->max_tree_depth;

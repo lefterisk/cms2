@@ -44,12 +44,24 @@ class ModelHandler
         }
         $this->adapter = $dbAdapter;
         $this->model   = new ModelManager($modelDefinitionArray);
-        $gateway = $this->initialiseTableGateway($this->model->getModelName(),$this->model->getMainTableExchangeArrayFields());
-        $this->mainTable = new ModelTable($gateway, $this->model->getMainTableColumns(), $this->model->getModelDbTableSync());
+
+        $this->initialiseMainTable();
+        $this->initialiseTranslationTable();
 
         //var_dump($this->mainTable->fetchAll());
 
         $this->initialised = true;
+    }
+
+    private function initialiseMainTable()
+    {
+        $gateway = $this->initialiseTableGateway($this->model->getModelName(),$this->model->getMainTableExchangeArrayFields());
+        $this->mainTable = new ModelTable($gateway, $this->model->getMainTableColumns(), $this->model->getModelDbTableSync());
+    }
+
+    private function initialiseTranslationTable()
+    {
+        var_dump();
     }
 
     private function initialiseTableGateway($tableName, $tableFields)
