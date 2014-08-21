@@ -4,7 +4,9 @@ namespace Administration\Helper;
 use Administration\Helper\DbGateway\ExchangeArrayObject;
 use Administration\Helper\DbGateway\CmsTableGateway;
 use Administration\Helper\DbGateway\ModelTable;
+use Administration\Helper\DbGateway\TranslationTable;
 use Administration\Helper\Manager\ModelManager;
+use Administration\Helper\Manager\TranslationManager;
 use Administration\Helper\Validator\ModelValidator;
 use Zend\Code\Scanner\DirectoryScanner;
 use Zend\Db\Adapter\AdapterInterface;
@@ -15,7 +17,8 @@ class ModelHandler
     private $errors               = array();
     private $initialised          = false;
     private $availableModelsArray = array();
-    private $model;
+    private $modelManager;
+    private $translationManager;
 
     protected $errorMsgArray = array(
         'ERROR_1' => 'The requested Model does not exist!',
@@ -43,25 +46,30 @@ class ModelHandler
             return;
         }
         $this->adapter = $dbAdapter;
-        $this->model   = new ModelManager($modelDefinitionArray);
-
+        
+        $this->modelManager   = new ModelManager($modelDefinitionArray);
         $this->initialiseMainTable();
-        $this->initialiseTranslationTable();
 
-        //var_dump($this->mainTable->fetchAll());
+        $this->translationManager = new TranslationManager($this->modelManager);
+        $this->initialiseTranslationTable();
 
         $this->initialised = true;
     }
 
     private function initialiseMainTable()
     {
-        $gateway = $this->initialiseTableGateway($this->model->getModelName(),$this->model->getMainTableExchangeArrayFields());
-        $this->mainTable = new ModelTable($gateway, $this->model->getMainTableColumns(), $this->model->getModelDbTableSync());
+        $gateway = $this->initialiseTableGateway($this->modelManager->getTableName(),$this->modelManager->getTableExchangeArray());
+        $this->modelTable = new ModelTable($gateway, $this->modelManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
     }
 
     private function initialiseTranslationTable()
     {
-        var_dump();
+        if ($this->translationManager->requiresTable()) {
+            $gateway = $this->initialiseTableGateway($this->translationManager->getTableName(),$this->translationManager->getTableExchangeArray());
+            $this->translationTable = new TranslationTable($gateway, $this->translationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
+        } else {
+            $this->translationTable = false;
+        }
     }
 
     private function initialiseTableGateway($tableName, $tableFields)

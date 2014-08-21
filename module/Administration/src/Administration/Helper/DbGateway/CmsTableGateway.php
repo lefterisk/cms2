@@ -23,10 +23,18 @@ class CmsTableGateway extends TableGateway
     public function createTable(Array $columns)
     {
         $sqlPartial    = '';
+        $primaryKeys   = '';
         foreach ($columns as $column => $type){
+            if (in_array($type,array('id','primary'))) {
+                $primaryKeys .= '`' . $column . '`,';
+            }
             $sqlPartial .= $this->getTableColumnPartialSql($column, $type).',';
         }
-        $sqlPartial  = rtrim($sqlPartial, ',');
+        if ($primaryKeys) {
+            $sqlPartial = $sqlPartial . ' PRIMARY KEY (' . rtrim($primaryKeys, ',') . ')';
+        } else {
+            $sqlPartial  = rtrim($sqlPartial, ',');
+        }
         $this->adapter->query('CREATE TABLE IF NOT EXISTS `' . $this->getTable() . '` (' . $sqlPartial .')', Adapter::QUERY_MODE_EXECUTE);
     }
 
@@ -59,10 +67,10 @@ class CmsTableGateway extends TableGateway
     {
         switch($type){
             case 'id':
-                $fieldType = " INT(11) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT ";
+                $fieldType = " INT(11) UNSIGNED NOT NULL AUTO_INCREMENT ";
                 break;
             case 'primary':
-                $fieldType = " INT(11) UNSIGNED NOT NULL PRIMARY KEY ";
+                $fieldType = " INT(11) UNSIGNED NOT NULL ";
                 break;
             case 'integer':
                 $fieldType = " INT(11) ";

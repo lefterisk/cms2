@@ -30,7 +30,7 @@ return array(
                 "lookup_table_name" => "",
             ),
         ),
-        "multilingual_varchars"   => array(),
+        "multilingual_varchars"   => array('pipes_multi_var'),
         "multilingual_texts"      => array(),
         "multilingual_long_texts" => array(),
         "multilingual_files"      => array(),

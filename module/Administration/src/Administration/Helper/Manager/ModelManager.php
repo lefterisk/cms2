@@ -1,7 +1,7 @@
 <?php
 namespace Administration\Helper\Manager;
 
-class ModelManager
+class ModelManager extends AbstractManager
 {
     private $model = '';
     private $prefix = '';
@@ -70,6 +70,16 @@ class ModelManager
                 }
             }
         }
+    }
+
+    public function getTableName()
+    {
+        return $this->model;
+    }
+
+    public function requiresTable()
+    {
+        return true;
     }
 
     public function getModelName()
@@ -257,7 +267,7 @@ class ModelManager
         );
     }
 
-    public function getMainTableColumns()
+    public function getTableColumnsDefinition()
     {
         $fields = array(
             'id'      => array('id'),
@@ -276,7 +286,7 @@ class ModelManager
         return $columnsWithTypes;
     }
 
-    public function getMainTableExchangeArrayFields()
+    public function getTableExchangeArray()
     {
         $fields = array_merge(
             array('id'),
