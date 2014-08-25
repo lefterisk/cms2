@@ -11,6 +11,7 @@ class ModelManager extends AbstractManager
     private $listing_fields = array();
     private $required_fields = array();
     private $input_filters = array();
+    private $form_manager = array();
     private $action_manager;
 
     private $booleans = array();
@@ -26,6 +27,10 @@ class ModelManager extends AbstractManager
     private $multilingual_files = array();
     private $relations = array();
     private $custom_selections = array();
+
+    //relation & custom selections fields
+    private $relations_fields = array();
+    private $custom_selection_fields = array();
 
     private $generalSettings = array(
         'model',
@@ -162,6 +167,15 @@ class ModelManager extends AbstractManager
         return $this->multilingual_texts;
     }
 
+    public function getMetaFields()
+    {
+        return array(
+            $this->getPrefix() . 'meta_title',
+            $this->getPrefix() . 'meta_slug',
+            $this->getPrefix() . 'meta_description'
+        );
+    }
+
     public function getMultilingualLongTexts()
     {
         return $this->multilingual_long_texts;
@@ -261,9 +275,9 @@ class ModelManager extends AbstractManager
         return array_merge(
             $this->getSimpleFields(),
             $this->getAdvancedFields(),
-            $this->getAllFileFields(),
-            $this->getRelations(),
-            $this->getCustomSelections()
+            $this->getAllFileFields()
+//            $this->getRelations(),
+//            $this->getCustomSelections()
         );
     }
 
@@ -274,7 +288,7 @@ class ModelManager extends AbstractManager
             'date'    => $this->dates,
             'varchar' => array_merge($this->varchars, $this->files, $this->getFileCaptions()),
             'boolean' => $this->booleans,
-            'integer' => $this->integers,
+            'integer' => array_merge($this->integers, $this->getRelationFields(),$this->getCustomSelectionFields()),
             'text'    => array_merge($this->texts,$this->long_texts),
         );
         $columnsWithTypes = array();
@@ -290,6 +304,8 @@ class ModelManager extends AbstractManager
     {
         $fields = array_merge(
             array('id'),
+            $this->getRelationFields(),
+            $this->getCustomSelectionFields(),
             $this->dates,
             $this->varchars,
             $this->booleans,
@@ -322,13 +338,29 @@ class ModelManager extends AbstractManager
         return $this->input_filters;
     }
 
-    public function getMetaFields()
+    public function getFormManager()
     {
-        return array(
-            $this->getPrefix() . 'meta_title',
-            $this->getPrefix() . 'meta_slug',
-            $this->getPrefix() . 'meta_description'
-        );
+        return $this->form_manager;
+    }
+
+    public function getRelationFields()
+    {
+        return $this->relations_fields;
+    }
+
+    public function getCustomSelectionFields()
+    {
+        return $this->custom_selection_fields;
+    }
+
+    public function setRelationField($field)
+    {
+        $this->relations_fields[] = $field;
+    }
+
+    public function setCustomSelectionField($field)
+    {
+        $this->custom_selection_fields[] = $field;
     }
 
     public function isMultiLingual()

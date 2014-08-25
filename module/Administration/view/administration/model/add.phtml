@@ -13,5 +13,27 @@
 <!-- Main content -->
 <section class="content">
 
+    <div class="nav-tabs-custom">
+        <ul class="nav nav-tabs">
+            <?php $tabCounter = 0; ?>
+            <?php foreach ($tabManager as $tab => $content ) : ?>
+            <li class="<?php echo ($tabCounter == 0)? 'active' : ''; ?>"><a href="#tab_<?php echo $tabCounter; ?>" data-toggle="tab"><?php echo $this->translate($tab); ?></a></li>
+                <?php $tabCounter++ ?>
+            <?php endforeach; ?>
+        </ul>
+        <?php $form->prepare() ?>
+        <?php echo $this->form()->openTag($form); ?>
+        <div class="tab-content">
+            <?php $tabCounter = 0; ?>
+            <?php foreach ($tabManager as $tab => $content ) : ?>
+                <div class="tab-pane active" id="tab_1">
+
+                </div>
+                <?php $tabCounter++ ?>
+            <?php endforeach; ?>
+        </div>
+        <?php echo $this->form()->closeTag($form); ?>
+    </div>
+
 
 </section>

@@ -24,4 +24,12 @@ class AbstractTable
             $this->tableGateway->syncColumns($this->tableColumns);
         }
     }
+
+    public function addColumns(Array $columns)
+    {
+        foreach ($columns as $column => $type) {
+            $this->tableColumns[$type][] = $column;
+        }
+        $this->tableGateway->syncColumns($columns);
+    }
 }

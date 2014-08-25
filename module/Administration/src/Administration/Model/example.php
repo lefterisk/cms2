@@ -23,12 +23,12 @@ return array(
             )
         ),
         "relations" => array(
-            "field_name" => array(
-                "related_model"     => "sss",
-                "relation_type"     => "oneToMany", // 'oneToMany', 'manyToOne', 'manyToMany'
-                "fields_for_select" => array(),
-                "lookup_table_name" => "",
-            ),
+//            "field_name" => array(
+//                "related_model"     => "example",
+//                "relation_type"     => "manyToOne", // 'oneToMany', 'manyToOne', 'manyToMany'
+//                "fields_for_select" => array(),
+//                "lookup_table_name" => "",
+//            ),
         ),
         "multilingual_varchars"   => array('pipes_multi_var'),
         "multilingual_texts"      => array(),
@@ -39,9 +39,9 @@ return array(
     "listing_fields"  => array(),
     "required_fields" => array(),
     "form_manager"    => array(
-        "tab_name" => array(
-            "field_name"
-        )
+//        "tab_name" => array(
+//            "field_name"
+//        )
     ),
     "input_filters"   => array(),
     "action_manager" => ""
