@@ -50,8 +50,19 @@ class ModelController extends AbstractActionController
 
         $formManager = new FormHandler($model);
 
+        $request = $this->getRequest();
+        $form    = $formManager->getForm();
+
+        if ($request->isPost()) {
+            $form->setInputFilter($model->getModelManager()->getInputFilter());
+            $form->setData($request->getPost());
+            if ($form->isValid()) {
+                $model->getModelTable()->getTableGateway()->insert($form->getData());
+            }
+        }
+
         return new ViewModel(array(
-            'form'               => $formManager->getForm(),
+            'form'               => $form,
             'tabManager'         => $formManager->getTabManager(),
             'multilingualFields' => $model->getModelManager()->getAllMultilingualFields()
         ));

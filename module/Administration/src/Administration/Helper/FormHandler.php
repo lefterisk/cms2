@@ -20,8 +20,6 @@ class FormHandler
         }
 
         $this->form = $this->initialiseForm();
-
-        var_dump($this->modelHandler->getModelManager()->getAllFields());
     }
 
     private function getDefaultTabManager()

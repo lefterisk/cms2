@@ -53,6 +53,16 @@ class ModelHandler
         }
     }
 
+    public function getModelTable()
+    {
+        return $this->modelTable;
+    }
+
+    public function getTranslationTable()
+    {
+        return $this->translationTable;
+    }
+
     private function initialiseMainTable()
     {
         $gateway = $this->initialiseTableGateway($this->modelManager->getTableName(),$this->modelManager->getTableExchangeArray());

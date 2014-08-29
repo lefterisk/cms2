@@ -32,4 +32,9 @@ class AbstractTable
         }
         $this->tableGateway->syncColumns($columns);
     }
+
+    public function getTableGateway()
+    {
+        return $this->tableGateway;
+    }
 }

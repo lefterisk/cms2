@@ -1,6 +1,8 @@
 <?php
 namespace Administration\Helper\Manager;
 
+use Zend\InputFilter\InputFilter;
+
 class ModelManager extends AbstractManager
 {
     private $model = '';
@@ -9,7 +11,6 @@ class ModelManager extends AbstractManager
     private $model_db_sync = false;
     private $max_tree_depth = 0;
     private $listing_fields = array();
-    private $required_fields = array();
     private $input_filters = array();
     private $form_manager = array();
     private $action_manager;
@@ -39,7 +40,6 @@ class ModelManager extends AbstractManager
         'model_db_sync',
         'max_tree_depth',
         'listing_fields',
-        'required_fields',
         'form_manager',
         'input_filters',
         'action_manager'
@@ -196,11 +196,6 @@ class ModelManager extends AbstractManager
         return $captions;
     }
 
-    public function getRequiredFields()
-    {
-        return $this->required_fields;
-    }
-
     public function getListingFields()
     {
         return $this->listing_fields;
@@ -333,9 +328,41 @@ class ModelManager extends AbstractManager
         return $this->action_manager;
     }
 
-    public function getInputFilters()
+    public function getInputFilter()
     {
-        return $this->input_filters;
+        $inputFilter = new InputFilter();
+        foreach ($this->input_filters as $filterDefinition) {
+            $inputFilter->add($filterDefinition);
+        }
+
+//            /*THis is because ZF2 has select input as required by default*/
+//            foreach ($this->getRelations() as $relation) {
+//                $inputFilter->add(array(
+//                    'name' => $relation->inputFieldName,
+//                    'required' => false,
+//                ));
+//            }
+//            foreach ($this->getCustomSelections() as $selection) {
+//                $inputFilter->add(array(
+//                    'name' => $selection->getFieldName(),
+//                    'required' => false,
+//                ));
+//            }
+//            foreach ($this->getDates() as $date) {
+//                $inputFilter->add(array(
+//                    'name' => $date,
+//                    'required' => true,
+//                    'validators' => array(
+//                        array(
+//                            'name'  => 'Zend\Validator\Date',
+//                            'options'  => array(
+//                                'format' => 'Y-m-d H:i:s'
+//                            )
+//                        ),
+//                    )
+//                ));
+//            }
+        return $inputFilter;
     }
 
     public function getFormManager()

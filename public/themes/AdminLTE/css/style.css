@@ -3533,3 +3533,9 @@ fieldset[disabled] .btn-vk.active {
   color: #587ea3;
   background-color: #ffffff;
 }
+
+ul.input_error {
+    margin: 0;
+    padding: 0 0 10px 0;
+    list-style: none;
+}

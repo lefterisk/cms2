@@ -24,10 +24,18 @@ return array(
     ),
     "max_tree_depth"  => 0,
     "listing_fields"  => array(),
-    "required_fields" => array(),
     "form_manager"    => array(
 
     ),
-    "input_filters"   => array(),
+    "input_filters"   => array(
+        array(
+            "name" => "site_language_name",
+            "required" => true
+        ),
+        array(
+            "name" => "site_language_code",
+            "required" => true
+        )
+    ),
     "action_manager" => ""
 );

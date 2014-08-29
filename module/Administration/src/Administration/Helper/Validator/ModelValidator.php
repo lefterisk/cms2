@@ -15,7 +15,6 @@ class ModelValidator extends AbstractValidator
         'fields'          => 'array',
         'max_tree_depth'  => 'int',
         'listing_fields'  => 'array',
-        'required_fields' => 'array',
         'form_manager'    => 'array',
         'input_filters'   => 'array',
     );
@@ -102,6 +101,8 @@ class ModelValidator extends AbstractValidator
             $this->checkCustomSelectionFields();
             //relations
             $this->checkRelationFields();
+            //input filters
+            $this->checkInputFilters();
         }
     }
 
@@ -147,6 +148,17 @@ class ModelValidator extends AbstractValidator
         if (array_key_exists('form_manager', $this->definition))
         {
             $validator = new FormManagerValidator($this->definition['form_manager']);
+            if (!$validator->validate()) {
+                $this->errors = array_merge($this->errors, $validator->getErrors());
+            }
+        }
+    }
+
+    private function checkInputFilters()
+    {
+        if (array_key_exists('input_filters', $this->definition))
+        {
+            $validator = new InputFilterValidator($this->definition['input_filters']);
             if (!$validator->validate()) {
                 $this->errors = array_merge($this->errors, $validator->getErrors());
             }

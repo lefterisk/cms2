@@ -1,0 +1,20 @@
+<div class="form-group <?php echo ($this->formElementErrors($field) != '') ? 'has-error' : ''; ?>">
+    <label><?php echo ($field->getLabel() != '') ? $this->translate($field->getLabel()) : ''; ?></label>
+    <div class="text-red"><?php echo  $this->formElementErrors($field, array('class' => "input_error")) ?></div>
+    <?php if (array_key_exists('data-type', $field->getAttributes())) : ?>
+        <?php $attributesArray = $field->getAttributes(); ?>
+        <div class="input-group">
+            <?php echo $this->formElement($field); ?>
+            <span class="input-group-btn">
+                <?php if( $field->getValue() != '' && $attributesArray['data-type'] == 'image' ): ?>
+                    <a href="<?php echo $field->getValue() ?>" class="btn btn-default image-preview" type="button">
+                        <span class="glyphicon glyphicon-picture"></span>
+                    </a>
+                <?php endif;?>
+                <a href="/filemanager/dialog.php?field_id=<?php echo $attributesArray['id'] ?>&type=<?php echo ($attributesArray['data-type'] == 'image')? '1':'2' ; ?>" class="btn btn-default iframe-btn " type="button"><?php echo $this->translate('Select'); ?></a>
+            </span>
+        </div>
+    <?php else: ?>
+        <?php echo $this->formElement($field); ?>
+    <?php endif; ?>
+</div>
