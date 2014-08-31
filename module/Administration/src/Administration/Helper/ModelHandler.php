@@ -188,4 +188,43 @@ class ModelHandler
     {
         return $this->modelManager;
     }
+
+    public function save(Array $data)
+    {
+        $mainTableFields        = array();
+        $translationTableFields = array();
+
+        foreach ($data as $fieldName => $fieldValue) {
+            if (in_array( $fieldName, $this->modelManager->getAllNonMultilingualFields())) {
+                $mainTableFields[$fieldName] = $fieldValue;
+            }
+            if (preg_match('/\[/', $fieldName)) {
+                $actualNameParts = explode('[', $fieldName);
+                $actualName      = $actualNameParts[0];
+
+                if (in_array($actualName, $this->modelManager->getAllMultilingualFields())) {
+                    $languageId = explode(']', $actualNameParts[1])[0];
+                    $translationTableFields[$languageId][$actualName] = $fieldValue;
+                }
+            }
+        }
+        if (isset($data['id']) && !empty($data['id'])) {
+            $this->getModelTable()->getTableGateway()->update($mainTableFields, array('id' => $data['id']));
+            foreach ($translationTableFields as $languageId => $fields) {
+                $this->getTranslationTable()->getTableGateway()->update($fields, array($this->getModelManager()->getPrefix() . 'id' => $data['id'], 'language_id' => $languageId));
+            }
+        } else {
+            $this->getModelTable()->getTableGateway()->insert($mainTableFields);
+            foreach ($translationTableFields as $languageId => $fields) {
+                $fields = array_merge(
+                    $fields,
+                    array(
+                        $this->getModelManager()->getPrefix() . 'id' =>  $this->getModelTable()->getTableGateway()->getLastInsertValue(),
+                        'language_id' => $languageId
+                    )
+                );
+                $this->getTranslationTable()->getTableGateway()->insert($fields);
+            }
+        }
+    }
 }

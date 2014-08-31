@@ -1,6 +1,7 @@
 <?php
 namespace Administration\Helper;
 
+use Administration\Helper\DbGateway\SiteLanguageHelper;
 use Zend\Form\Form;
 
 class FormHandler
@@ -8,10 +9,12 @@ class FormHandler
     protected $modelHandler;
     protected $form;
     protected $tabManager = array();
+    protected $languageHelper;
 
-    public function __construct(ModelHandler $modelHandler)
+    public function __construct(ModelHandler $modelHandler, SiteLanguageHelper $languageHelper)
     {
-        $this->modelHandler = $modelHandler;
+        $this->modelHandler   = $modelHandler;
+        $this->languageHelper = $languageHelper;
 
         if (!is_array($this->modelHandler->getModelManager()->getFormManager()) || count($this->modelHandler->getModelManager()->getFormManager()) <= 0 ) {
             $this->tabManager = $this->getDefaultTabManager();
@@ -32,10 +35,10 @@ class FormHandler
             $tabManager['editor_fields'] = $this->modelHandler->getModelManager()->getAdvancedFields();
         }
         if (count($this->modelHandler->getModelManager()->getAllFileFields()) > 0) {
-            $tabManager['file_fields'] = $this->modelHandler->getModelManager()->getAllFileFields();
+            $tabManager['file_fields']   = $this->modelHandler->getModelManager()->getAllFileFields();
         }
         if ($this->modelHandler->getModelManager()->isStandAlonePage()) {
-            $tabManager['meta_fields'] = $this->modelHandler->getModelManager()->getMetaFields();
+            $tabManager['meta_fields']   = $this->modelHandler->getModelManager()->getMetaFields();
         }
         return $tabManager;
     }
@@ -101,20 +104,20 @@ class FormHandler
             }
 
             if (in_array($field, $this->modelHandler->getModelManager()->getAllMultilingualFields())) {
-//                foreach ($this->controlPanel->getSiteLanguages() as $languageId => $language) {
-//                    if (array_key_exists('id', $attributes)) {
-//                        $attributes['id'] = $attributes['id'] . '-' . $languageId;
-//                    }
-//                    $this->form->add(array(
-//                        'type'       => $type,
-//                        'name'       => $name . '[' . $languageId . ']',
-//                        'options'    => array(
-//                            'label'         => $label,
-//                            'value_options' => $value_options,
-//                        ),
-//                        'attributes' => array_merge($attributes,array('placeholder' => $name)),
-//                    ));
-//                }
+                foreach ($this->languageHelper->getLanguages() as $languageId => $language) {
+                    if (array_key_exists('id', $attributes)) {
+                        $attributes['id'] = $attributes['id'] . '-' . $languageId;
+                    }
+                    $form->add(array(
+                        'type'       => $type,
+                        'name'       => $name . '[' . $languageId . ']',
+                        'options'    => array(
+                            'label'         => $label,
+                            'value_options' => $value_options,
+                        ),
+                        'attributes' => array_merge($attributes,array('placeholder' => $name)),
+                    ));
+                }
             } else {
                 $form->add(array(
                     'type'       => $type,
@@ -141,5 +144,20 @@ class FormHandler
     public function getTabManager()
     {
         return $this->tabManager;
+    }
+
+    public function preparePostData($post)
+    {
+        $returnArray = array();
+        foreach ($post as $field => $values) {
+            if (in_array($field,  $this->modelHandler->getModelManager()->getAllMultilingualFields()) && is_array($values)) {
+                foreach ($values as $languageId => $fieldValue) {
+                    $returnArray[$field . '[' . $languageId . ']'] = $fieldValue;
+                }
+            } else {
+                $returnArray[$field] = $values;
+            }
+        }
+        return $returnArray;
     }
 }

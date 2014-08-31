@@ -9,8 +9,8 @@ return array(
     "model_db_sync" => true,
     "fields" => array(
         "dates"                   => array(),
-        "booleans"                => array('site_language_status','site_language_primary'),
-        "varchars"                => array('site_language_name','site_language_code'),
+        "booleans"                => array('status','is_primary'),
+        "varchars"                => array('name','code'),
         "texts"                   => array(),
         "long_texts"              => array(),
         "integers"                => array(),
@@ -29,11 +29,11 @@ return array(
     ),
     "input_filters"   => array(
         array(
-            "name" => "site_language_name",
+            "name" => "name",
             "required" => true
         ),
         array(
-            "name" => "site_language_code",
+            "name" => "code",
             "required" => true
         )
     ),

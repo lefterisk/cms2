@@ -29,7 +29,9 @@
                 <div class="tab-pane <?php echo ($tabCounter == 0)? 'active' : ''; ?>" id="tab_<?php echo $tabCounter; ?>">
                 <?php foreach ($contents as $field) : ?>
                     <?php if (is_array($multilingualFields) && in_array($field , $multilingualFields)) : ?>
-                        <?php echo $this->partial('administration/model/partials/multilingual_form_element.phtml', array('field' => $form->get($field))); ?>
+                        <?php foreach ($siteLanguages as $languageId => $language): ?>
+                            <?php echo $this->partial('administration/model/partials/multilingual_form_element.phtml', array('field' => $form->get($field . '[' . $languageId . ']'), 'language' => $language)); ?>
+                        <?php endforeach; ?>
                     <?php else: ?>
                         <?php echo $this->partial('administration/model/partials/non_multilingual_form_element.phtml', array('field' => $form->get($field))); ?>
                     <?php endif; ?>

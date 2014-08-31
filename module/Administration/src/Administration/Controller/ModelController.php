@@ -48,22 +48,24 @@ class ModelController extends AbstractActionController
             return $viewModel->setTemplate('error/admin/model');
         }
 
-        $formManager = new FormHandler($model);
+        $formManager = new FormHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
 
         $request = $this->getRequest();
         $form    = $formManager->getForm();
 
         if ($request->isPost()) {
             $form->setInputFilter($model->getModelManager()->getInputFilter());
-            $form->setData($request->getPost());
+
+            $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
-                $model->getModelTable()->getTableGateway()->insert($form->getData());
+                $model->save($form->getData());
             }
         }
 
         return new ViewModel(array(
             'form'               => $form,
             'tabManager'         => $formManager->getTabManager(),
+            'siteLanguages'      => $this->getServiceLocator()->get('SiteLanguages')->getLanguages(),
             'multilingualFields' => $model->getModelManager()->getAllMultilingualFields()
         ));
     }

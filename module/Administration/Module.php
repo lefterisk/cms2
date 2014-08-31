@@ -9,6 +9,7 @@
 
 namespace Administration;
 
+use Administration\Helper\DbGateway\SiteLanguageHelper;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Session\Container;
@@ -116,12 +117,16 @@ class Module
         return array(
             'factories' => array(
                 'DbAdapter' => function ($sm) {
-                        $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
-                        return $dbAdapter;
-                    },
+                    $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
+                    return $dbAdapter;
+                },
                 'Session' => function ($sm) {
                     return new Container();
                 },
+                'SiteLanguages' => function ($sm) {
+                    $dbAdapter = $sm->get('DbAdapter');
+                    return new SiteLanguageHelper($dbAdapter);
+                }
             ),
         );
     }
