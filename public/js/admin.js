@@ -53,15 +53,20 @@ var AppView = Backbone.View.extend({
             external_plugins          : { "filemanager" : "/filemanager/plugin.min.js" }
         });
 
-//        $('.datePicker').datetimepicker({
-//            format: "yyyy-mm-dd hh:ii:ss",
-//            autoclose: true,
-//            todayBtn: true
-//        });
-//        $('.datetimePickerClear').click(function(){
-//            $(this).closest('.input-group').find('input').val('');
-//            return false;
-//        });
+        $('.datePicker').datetimepicker({
+            format: "yyyy-mm-dd hh:ii:ss",
+            autoclose: true,
+            todayBtn: true
+        });
+        $('.datetimePickerTrigger').bind('click',function(e){
+            e.preventDefault();
+            $(this).closest('.input-group').find('.datePicker').datetimepicker('show');
+        });
+        $('.datetimePickerClear').bind('click',function(e){
+            e.preventDefault();
+            $(this).closest('.input-group').find('input').val('');
+        });
+
         $('.bootstrapSwitchIndex').bootstrapSwitch({
             size: 'mini',
             onColor: 'success',

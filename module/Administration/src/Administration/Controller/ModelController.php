@@ -10,6 +10,7 @@
 namespace Administration\Controller;
 
 use Administration\Helper\FormHandler;
+use Administration\Helper\ListingHandler;
 use Administration\Helper\ModelHandler;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -32,7 +33,11 @@ class ModelController extends AbstractActionController
             return $viewModel->setTemplate('error/admin/model');
         }
 
-        return new ViewModel();
+        $listingHandler = new ListingHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
+
+        return new ViewModel(array(
+            'listing' => $listingHandler->getListing()
+        ));
     }
 
     public function addAction()

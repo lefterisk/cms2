@@ -4,8 +4,7 @@ namespace Administration\Helper\DbGateway;
 
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\TableGateway;
-use Zend\Db\ResultSet\ResultSetInterface;
-use Zend\Db\Sql\Sql;
+
 
 class CmsTableGateway extends TableGateway
 {
@@ -79,7 +78,7 @@ class CmsTableGateway extends TableGateway
                 $fieldType = " ENUM( '0', '1' ) NOT NULL ";
                 break;
             case 'date':
-                $fieldType = " DATETIME ";
+                $fieldType = " VARCHAR( 11 ) ";
                 break;
             case 'text':
                 $fieldType = " TEXT ";

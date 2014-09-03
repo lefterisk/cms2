@@ -39,4 +39,19 @@ class SiteLanguageHelper
         }
         return $this->languages;
     }
+
+    public function getPrimaryLanguageId()
+    {
+        $languages = $this->getLanguages();
+        foreach ($languages as $id => $definition) {
+            if ($definition['is_primary']) {
+                return $id;
+            }
+        }
+
+        //if no primary has been set just return the first one
+        reset($languages);
+        $id = key($languages);
+        return $id;
+    }
 }

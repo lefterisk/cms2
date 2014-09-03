@@ -15,6 +15,11 @@ class ExchangeArrayObject
         $this->properties = $properties;
     }
 
+    public function addProperty($property)
+    {
+        $this->properties[] = $property;
+    }
+
     public function exchangeArray($data)
     {
         foreach ($this->properties as $property) {

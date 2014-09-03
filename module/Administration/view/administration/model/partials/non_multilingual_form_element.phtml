@@ -10,8 +10,16 @@
                     <a href="<?php echo $field->getValue() ?>" class="btn btn-default image-preview" type="button">
                         <span class="glyphicon glyphicon-picture"></span>
                     </a>
+                <?php elseif ($attributesArray['data-type'] == 'date' ) : ?>
+                    <a href="" class="btn btn-default datetimePickerClear" type="button">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </a>
+                    <a href="" class="btn btn-default datetimePickerTrigger" type="button">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </a>
+                <?php else: ?>
+                    <a href="/filemanager/dialog.php?field_id=<?php echo $attributesArray['id'] ?>&type=<?php echo ($attributesArray['data-type'] == 'image')? '1':'2' ; ?>" class="btn btn-default iframe-btn " type="button"><?php echo $this->translate('Select'); ?></a>
                 <?php endif;?>
-                <a href="/filemanager/dialog.php?field_id=<?php echo $attributesArray['id'] ?>&type=<?php echo ($attributesArray['data-type'] == 'image')? '1':'2' ; ?>" class="btn btn-default iframe-btn " type="button"><?php echo $this->translate('Select'); ?></a>
             </span>
         </div>
     <?php else: ?>
