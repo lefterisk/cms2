@@ -10,6 +10,7 @@ use Administration\Helper\Manager\TranslationManager;
 use Administration\Helper\Validator\ModelValidator;
 use Zend\Code\Scanner\DirectoryScanner;
 use Zend\Db\Adapter\AdapterInterface;
+use Zend\Filter\Int;
 
 class ModelHandler
 {
@@ -25,7 +26,8 @@ class ModelHandler
         'ERROR_2' => 'Model is missing definitions array!',
         'ERROR_3' => 'The requested Relation Model does not exist!',
         'ERROR_4' => 'Relation Model is missing definitions array!',
-
+        'ERROR_5' => 'When requesting an item by "id", "id" must be an integer!',
+        'ERROR_6' => 'You requested an item that does not exist!',
     );
 
     public function __construct($model, AdapterInterface $dbAdapter)
@@ -56,14 +58,19 @@ class ModelHandler
         return $this->modelTable;
     }
 
+    public function getModelManager()
+    {
+        return $this->modelManager;
+    }
+
     public function getTranslationTable()
     {
         return $this->translationTable;
     }
 
-    public function getModelManager()
+    public function getTranslationManager()
     {
-        return $this->modelManager;
+        return $this->translationManager;
     }
 
     public function getErrors()
@@ -225,5 +232,30 @@ class ModelHandler
                 $this->getTranslationTable()->getTableGateway()->insert($fields);
             }
         }
+    }
+
+    public function getItemById($id)
+    {
+        $filter   = new Int();
+        if (empty($id) || !is_int( $filter->filter($id))) {
+            $this->errors[] = $this->errorMsgArray['ERROR_5'];
+            throw new \Exception();
+        }
+
+        $mainTableData           = $this->getModelTable()->getTableGateway()->select($id)->toArray();
+        if (count($mainTableData) == 0 ) {
+            $this->errors[] = $this->errorMsgArray['ERROR_6'];
+            throw new \Exception();
+        }
+        $rawTranslationTableData = $this->getTranslationTable()->getTableGateway()->select(array($this->getModelManager()->getPrefix() . 'id' => $id));
+        $translationData         = array();
+        foreach ($rawTranslationTableData as $translation) {
+            foreach ($translation as $field => $value) {
+                if (!in_array($field, array($this->getModelManager()->getPrefix() . 'id', 'language_id'))) {
+                    $translationData[$field][$translation['language_id']] = $value;
+                }
+            }
+        }
+        return array_merge($mainTableData[0],$translationData);
     }
 }

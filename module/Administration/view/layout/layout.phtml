@@ -18,6 +18,8 @@
             ->prependStylesheet($this->basePath() . '/css/bootstrap-switch.min.css')
             ->prependStylesheet($this->basePath() . '/css/bootstrap-datetimepicker.min.css')
             ->prependStylesheet($this->basePath() . '/css/morris/morris.css')
+            ->prependStylesheet($this->basePath() . '/css/datatables/dataTables.bootstrap.css')
+            ->prependStylesheet($this->basePath() . '/css/iCheck/all.css')
             ->prependStylesheet($this->basePath() . '/css/datepicker/datepicker3.css')
             ->prependStylesheet($this->basePath() . '/themes/' . $theme . '/css/style.css')
         ?>
@@ -328,8 +330,10 @@
             ->offsetSetFile(1, $this->basePath() . '/js/jquery.min.js')
             ->offsetSetFile(2, $this->basePath() . '/js/plugins.js')
             ->offsetSetFile(3, $this->basePath() . '/js/tinymce/tinymce.min.js')
-            ->offsetSetFile(4, $this->basePath() . '/themes/' . $theme . '/js/app.js')
-            ->offsetSetFile(5, $this->basePath() . '/js/admin.js')
+            ->offsetSetFile(4, $this->basePath() . '/js/datatables/jquery.dataTables.js')
+            ->offsetSetFile(5, $this->basePath() . '/js/datatables/dataTables.bootstrap.js')
+            ->offsetSetFile(6, $this->basePath() . '/themes/' . $theme . '/js/app.js')
+            ->offsetSetFile(7, $this->basePath() . '/js/admin.js')
     ?>
     </body>
 </html>

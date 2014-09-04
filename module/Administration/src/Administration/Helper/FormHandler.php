@@ -47,6 +47,11 @@ class FormHandler
     {
         $form = new Form($this->modelHandler->getModelManager()->getModelName());
 
+        $form->add(array(
+            'type' => 'hidden',
+            'name' => 'id',
+        ));
+
         foreach ($this->modelHandler->getModelManager()->getAllFields() as $field) {
             $type          = 'Zend\Form\Element\Text';
             $attributes    = array();

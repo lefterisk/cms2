@@ -1,6 +1,8 @@
 <?php
 namespace Administration\Helper\Manager;
 
+use Zend\Db\Sql\Select;
+
 class TranslationManager extends AbstractManager
 {
     protected $model;

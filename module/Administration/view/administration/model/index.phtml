@@ -1,17 +1,64 @@
 <section class="content-header">
     <h1>
-        Index
-        <small>it all starts here</small>
+        <?php echo $this->translate($model); ?>
     </h1>
     <ol class="breadcrumb">
-        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-        <li><a href="#">Examples</a></li>
-        <li class="active">Blank page</li>
+        <li><a href="<?php echo $this->url('administration'); ?>"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li><a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model)); ?>"><?php echo $this->translate($model); ?></a></li>
     </ol>
 </section>
 
 <!-- Main content -->
 <section class="content">
+    <div class="box">
+        <div class="box-body table-responsive">
+            <table class="table table-bordered table-striped datatable">
+                <thead>
+                    <tr>
+                        <th width="20" class="text-center">#</th>
+                    <?php foreach ($listingFields as $field => $definition) : ?>
+                        <th><?php echo $this->translate($field); ?>&nbsp;&nbsp;&nbsp;</th>
+                    <?php endforeach; ?>
+                        <th width="50">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($listing as $item) : ?>
+                    <tr>
+                        <td class="text-center"><input type="checkbox" name="multipleDeleteCheck[]" value="<?php echo $item->id ?>"/></td>
+                    <?php foreach ($listingFields as $field => $definition) : ?>
+                        <?php if ($definition == 'boolean') : ?>
+                            <td width="30" class="text-center"><input type="checkbox" class="simple bootstrapSwitchIndex" data-model="<?php echo $model ?>" data-field="<?php echo $field ?>" data-id="<?php echo $item->id ?>" name="<?php echo $field ?>[<?php echo $item->id ?>]" <?php echo ($item->{$field}) ? 'checked' : ''; ?>></td>
+                        <?php else: ?>
+                            <td><?php echo $item->{$field}; ?></td>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                <a href="<?php echo $this->url('administration/model', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-info">
+                                    <span class="glyphicon  glyphicon-pencil"></span>
+                                </a>
+                                <a href="" type="button" class="btn btn-xs btn-warning">
+                                    <span class="glyphicon  glyphicon-trash"></span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
 
+            <div class="btn-group">
+                <a href="<?php echo $this->url('administration/model', array('action' => 'add', 'model' => $model)); ?>" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-plus-sign"></span>
+                    <?php echo $this->translate('Add New'); ?>
+                </a>
+                <button type="submit" class="btn btn-warning">
+                    <span class="glyphicon glyphicon-trash"></span>
+                    <?php echo $this->translate('Delete Selected'); ?>
+                </button>
+            </div>
 
+        </div><!-- /.box-body -->
+    </div><!-- /.box -->
 </section>

@@ -1,17 +1,47 @@
 <section class="content-header">
     <h1>
-        Edit
-        <small>it all starts here</small>
+        <?php echo $this->translate($model); ?>
     </h1>
     <ol class="breadcrumb">
-        <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
-        <li><a href="#">Examples</a></li>
-        <li class="active">Blank page</li>
+        <li><a href="<?php echo $this->url('administration'); ?>"><i class="fa fa-dashboard"></i> <?php echo $this->translate('Home'); ?></a></li>
+        <li><a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model)); ?>"><?php echo $this->translate($model); ?></a></li>
     </ol>
 </section>
 
 <!-- Main content -->
 <section class="content">
-
-
+    <?php $form->prepare() ?>
+    <?php echo $this->form()->openTag($form); ?>
+    <?php echo $this->partial('administration/model/partials/form_errors.phtml', array('errors' => $form->getMessages())); ?>
+    <?php echo $this->formElement($form->get('id')); ?>
+    <div class="nav-tabs-custom">
+        <ul class="nav nav-tabs">
+            <?php $tabCounter = 0; ?>
+            <?php foreach ($tabManager as $tab => $content ) : ?>
+                <li class="<?php echo ($tabCounter == 0)? 'active' : ''; ?>"><a href="#tab_<?php echo $tabCounter; ?>" data-toggle="tab"><?php echo $this->translate($tab); ?></a></li>
+                <?php $tabCounter++ ?>
+            <?php endforeach; ?>
+        </ul>
+        <div class="tab-content">
+            <?php $tabCounter = 0; ?>
+            <?php foreach ($tabManager as $tab => $contents ) : ?>
+                <div class="tab-pane <?php echo ($tabCounter == 0)? 'active' : ''; ?>" id="tab_<?php echo $tabCounter; ?>">
+                    <?php foreach ($contents as $field) : ?>
+                        <?php if (is_array($multilingualFields) && in_array($field , $multilingualFields)) : ?>
+                            <?php foreach ($siteLanguages as $languageId => $language): ?>
+                                <?php echo $this->partial('administration/model/partials/multilingual_form_element.phtml', array('field' => $form->get($field . '[' . $languageId . ']'), 'language' => $language)); ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <?php echo $this->partial('administration/model/partials/non_multilingual_form_element.phtml', array('field' => $form->get($field))); ?>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
+                <?php $tabCounter++ ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">
+        <span class="glyphicon glyphicon-floppy-disk"></span>&nbsp;<?php echo $this->translate('Save'); ?>
+    </button>
+    <?php echo $this->form()->closeTag($form); ?>
 </section>

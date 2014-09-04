@@ -36,7 +36,9 @@ class ModelController extends AbstractActionController
         $listingHandler = new ListingHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
 
         return new ViewModel(array(
-            'listing' => $listingHandler->getListing()
+            'model'         => $requested_model,
+            'listing'       => $listingHandler->getListing(),
+            'listingFields' => $listingHandler->getListingFieldsDefinitions()
         ));
     }
 
@@ -77,7 +79,53 @@ class ModelController extends AbstractActionController
 
     public function editAction()
     {
-        return new ViewModel();
+        $requested_model = $this->params()->fromRoute('model');
+        $requested_item  = $this->params()->fromRoute('item');
+        $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        if (!$model->isInitialised()) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            $viewModel       = new ViewModel(array(
+                'modelName'  =>  $requested_model,
+                'errors' => $this->errors
+            ));
+            return $viewModel->setTemplate('error/admin/model');
+        }
+
+        $formManager = new FormHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
+
+        $request = $this->getRequest();
+        $form    = $formManager->getForm();
+
+        try {
+            $item = $model->getItemById($requested_item);
+            $form->setInputFilter($model->getModelManager()->getInputFilter());
+            $form->setData($formManager->preparePostData($item));
+        }
+        catch (\Exception $ex) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            $viewModel       = new ViewModel(array(
+                'modelName'  =>  $requested_model,
+                'errors'     => $this->errors
+            ));
+            return $viewModel->setTemplate('error/admin/model');
+        }
+
+        if ($request->isPost()) {
+            $form->setInputFilter($model->getModelManager()->getInputFilter());
+
+            $form->setData($formManager->preparePostData($request->getPost()));
+            if ($form->isValid()) {
+                $model->save($form->getData());
+            }
+        }
+
+        return new ViewModel(array(
+            'model'              => $requested_model,
+            'form'               => $form,
+            'tabManager'         => $formManager->getTabManager(),
+            'siteLanguages'      => $this->getServiceLocator()->get('SiteLanguages')->getLanguages(),
+            'multilingualFields' => $model->getModelManager()->getAllMultilingualFields()
+        ));
     }
 
     public function saveAction()

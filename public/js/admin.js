@@ -67,6 +67,16 @@ var AppView = Backbone.View.extend({
             $(this).closest('.input-group').find('input').val('');
         });
 
+        $('.datatable').dataTable({
+            "bPaginate": true,
+            "bLengthChange": true,
+            "bFilter": true,
+            "bSort": true,
+            "bInfo": true,
+            "bAutoWidth": false,
+            "aoColumnDefs": [{ 'bSortable': false, 'aTargets': [ 0] }]
+        });
+
         $('.bootstrapSwitchIndex').bootstrapSwitch({
             size: 'mini',
             onColor: 'success',

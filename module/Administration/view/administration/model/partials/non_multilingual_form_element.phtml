@@ -1,3 +1,4 @@
+<?php if ($field->getLabel() != ''): ?>
 <div class="form-group <?php echo ($this->formElementErrors($field) != '') ? 'has-error' : ''; ?>">
     <label><?php echo ($field->getLabel() != '') ? $this->translate($field->getLabel()) : ''; ?></label>
     <div class="text-red"><?php echo  $this->formElementErrors($field, array('class' => "input_error")) ?></div>
@@ -6,7 +7,7 @@
         <div class="input-group">
             <?php echo $this->formElement($field); ?>
             <span class="input-group-btn">
-                <?php if( $field->getValue() != '' && $attributesArray['data-type'] == 'image' ): ?>
+                <?php if( $field->getValue() != '' && preg_match('~(jpg|jpeg|png|gif)~i', $field->getValue())): ?>
                     <a href="<?php echo $field->getValue() ?>" class="btn btn-default image-preview" type="button">
                         <span class="glyphicon glyphicon-picture"></span>
                     </a>
@@ -26,3 +27,6 @@
         <?php echo $this->formElement($field); ?>
     <?php endif; ?>
 </div>
+<?php else: ?>
+    <?php echo $this->formElement($field); ?>
+<?php endif; ?>

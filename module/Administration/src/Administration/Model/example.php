@@ -36,7 +36,7 @@ return array(
         "multilingual_files"      => array(),
     ),
     "max_tree_depth"  => 0,
-    "listing_fields"  => array(),
+    "listing_fields"  => array('pipes_date','pipes_boolean','pipes1'),
     "required_fields" => array(),
     "form_manager"    => array(
 //        "tab_name" => array(
