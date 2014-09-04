@@ -11,7 +11,8 @@
                     <a href="<?php echo $field->getValue() ?>" class="btn btn-default image-preview" type="button">
                         <span class="glyphicon glyphicon-picture"></span>
                     </a>
-                <?php elseif ($attributesArray['data-type'] == 'date' ) : ?>
+                <?php endif; ?>
+                <?php if ($attributesArray['data-type'] == 'date' ) : ?>
                     <a href="" class="btn btn-default datetimePickerClear" type="button">
                         <span class="glyphicon glyphicon-remove"></span>
                     </a>
