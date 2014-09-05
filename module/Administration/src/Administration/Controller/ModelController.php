@@ -168,7 +168,7 @@ class ModelController extends AbstractActionController
     public function deleteMultipleAction()
     {
         $requested_model = $this->params()->fromRoute('model');
-        $itemsToDelete   = $this->getRequest()->getPost('itemsToDelete');
+        $itemsToDelete   = $this->getRequest()->getPost('multipleDeleteCheck');
 
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
