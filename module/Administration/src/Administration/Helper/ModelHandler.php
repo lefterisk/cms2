@@ -22,12 +22,16 @@ class ModelHandler
     private $relationManagers  = array();
 
     protected $errorMsgArray = array(
-        'ERROR_1' => 'The requested Model does not exist!',
-        'ERROR_2' => 'Model is missing definitions array!',
-        'ERROR_3' => 'The requested Relation Model does not exist!',
-        'ERROR_4' => 'Relation Model is missing definitions array!',
-        'ERROR_5' => 'When requesting an item by "id", "id" must be an integer!',
-        'ERROR_6' => 'You requested an item that does not exist!',
+        'ERROR_1'  => 'The requested Model does not exist!',
+        'ERROR_2'  => 'Model is missing definitions array!',
+        'ERROR_3'  => 'The requested Relation Model does not exist!',
+        'ERROR_4'  => 'Relation Model is missing definitions array!',
+        'ERROR_5'  => 'When requesting an item by "id", "id" must be an integer!',
+        'ERROR_6'  => 'You requested an item that does not exist!',
+        'ERROR_7'  => 'When deleting an item a valid integer "id" must be provided!',
+        'ERROR_8'  => 'When deleting an item, "hard" parameter if provided must be a boolean!',
+        'ERROR_9'  => 'Something went wrong while trying to delete the requested item(s)!',
+        'ERROR_10' => 'When requesting deletion of multiple items you have to provide an array of ids to delete!',
     );
 
     public function __construct($model, AdapterInterface $dbAdapter)
@@ -242,20 +246,80 @@ class ModelHandler
             throw new \Exception();
         }
 
-        $mainTableData           = $this->getModelTable()->getTableGateway()->select($id)->toArray();
-        if (count($mainTableData) == 0 ) {
+        $mainTableData           = $this->getModelTable()->getTableGateway()->select(array('id' => $id))->current();
+        if (!$mainTableData) {
             $this->errors[] = $this->errorMsgArray['ERROR_6'];
             throw new \Exception();
         }
-        $rawTranslationTableData = $this->getTranslationTable()->getTableGateway()->select(array($this->getModelManager()->getPrefix() . 'id' => $id));
         $translationData         = array();
-        foreach ($rawTranslationTableData as $translation) {
-            foreach ($translation as $field => $value) {
-                if (!in_array($field, array($this->getModelManager()->getPrefix() . 'id', 'language_id'))) {
-                    $translationData[$field][$translation['language_id']] = $value;
+        if ($this->modelManager->isMultiLingual()) {
+            $rawTranslationTableData = $this->getTranslationTable()->getTableGateway()->select(array($this->getModelManager()->getPrefix() . 'id' => $id));
+            foreach ($rawTranslationTableData as $translation) {
+                foreach ($translation as $field => $value) {
+                    if (!in_array($field, array($this->getModelManager()->getPrefix() . 'id', 'language_id'))) {
+                        $translationData[$field][$translation['language_id']] = $value;
+                    }
                 }
             }
         }
-        return array_merge($mainTableData[0],$translationData);
+
+        return array_merge($mainTableData->getArrayCopy(),$translationData);
+    }
+
+    public function deleteItemById($id, $hard = true)
+    {
+        $filter   = new Int();
+        if (empty($id) || !is_int( $filter->filter($id))) {
+            $this->errors[] = $this->errorMsgArray['ERROR_7'];
+            throw new \Exception();
+        }
+
+        if (!is_bool($hard)) {
+            $this->errors[] = $this->errorMsgArray['ERROR_8'];
+            throw new \Exception();
+        }
+
+        try {
+            if ($hard) {
+                $rowsAffected = $this->getModelTable()->getTableGateway()->delete(array('id' => $id));
+                if ($rowsAffected > 0 && $this->modelManager->isMultiLingual()) {
+                    $this->getTranslationTable()->getTableGateway()->delete(array($this->getModelManager()->getPrefix() . 'id' => $id));
+                }
+            } else {
+
+            }
+        } catch (\Exception $ex) {
+            $this->errors[] = $this->errorMsgArray['ERROR_9'];
+            throw new \Exception();
+        }
+    }
+
+    public function deleteMultipleItemsById($idsToDeleteArray, $hard = true)
+    {
+        $successfulDeletes = 0;
+        $failedDeletes     = 0;
+
+        if (!is_array($idsToDeleteArray) || empty($idsToDeleteArray)) {
+            $this->errors[] = $this->errorMsgArray['ERROR_10'];
+            throw new \Exception();
+        }
+
+        if (!is_bool($hard)) {
+            $this->errors[] = $this->errorMsgArray['ERROR_8'];
+            throw new \Exception();
+        }
+
+        foreach ($idsToDeleteArray as $id) {
+            try {
+                $this->deleteItemById($id, $hard);
+                $successfulDeletes++;
+            } catch (\Exception $ex) {
+                $failedDeletes++;
+            }
+        }
+        return array(
+            'successfulDeletes' => $successfulDeletes,
+            'failedDeletes'     => $failedDeletes
+        );
     }
 }

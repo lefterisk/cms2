@@ -12,6 +12,8 @@
 <section class="content">
     <div class="box">
         <div class="box-body table-responsive">
+            <?php $multipleDeleteForm->prepare(); ?>
+            <?php echo $this->form()->openTag($multipleDeleteForm); ?>
             <table class="table table-bordered table-striped datatable">
                 <thead>
                     <tr>
@@ -38,7 +40,7 @@
                                 <a href="<?php echo $this->url('administration/model', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-info">
                                     <span class="glyphicon  glyphicon-pencil"></span>
                                 </a>
-                                <a href="" type="button" class="btn btn-xs btn-warning">
+                                <a href="<?php echo $this->url('administration/model', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-warning">
                                     <span class="glyphicon  glyphicon-trash"></span>
                                 </a>
                             </div>
@@ -58,7 +60,7 @@
                     <?php echo $this->translate('Delete Selected'); ?>
                 </button>
             </div>
-
+            <?php echo $this->form()->closeTag(); ?>
         </div><!-- /.box-body -->
     </div><!-- /.box -->
 </section>

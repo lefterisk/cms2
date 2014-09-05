@@ -29,7 +29,8 @@ return array(
                                 'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
                                 'parent'        => '[0-9]*',
                                 'item'          => '[0-9_-]*',
-                                'action' => '(index|add|edit|save|delete|delete-multiple)',
+//                                'action'        => '(index|add|edit|save|delete|delete-multiple)',
+                                'action'        => '[a-zA-Z][a-zA-Z0-9_-]*'
                             ),
                             'defaults' => array(
                                 'controller' => 'Administration\Controller\Model',

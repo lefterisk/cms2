@@ -331,8 +331,22 @@ class ModelManager extends AbstractManager
     public function getInputFilter()
     {
         $inputFilter = new InputFilter();
+        //add model defined filters
         foreach ($this->input_filters as $filterDefinition) {
             $inputFilter->add($filterDefinition);
+        }
+        //add filters to all integer fields
+        foreach ($this->getIntegers() as $integer) {
+            $inputFilter->add(
+                array(
+                    'name' => $integer,
+                    'validators' => array(
+                        array(
+                            'name'  => 'Int',
+                        )
+                    )
+                )
+            );
         }
 
 //            /*THis is because ZF2 has select input as required by default*/

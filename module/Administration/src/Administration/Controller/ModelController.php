@@ -12,6 +12,7 @@ namespace Administration\Controller;
 use Administration\Helper\FormHandler;
 use Administration\Helper\ListingHandler;
 use Administration\Helper\ModelHandler;
+use Zend\Form\Form;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -23,22 +24,27 @@ class ModelController extends AbstractActionController
     public function indexAction()
     {
         $requested_model = $this->params()->fromRoute('model');
-        $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        $model           = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
             $viewModel       = new ViewModel(array(
-                'modelName'  =>  $requested_model,
-                'errors' => $this->errors
+                'modelName' =>  $requested_model,
+                'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
 
-        $listingHandler = new ListingHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
+        $listingHandler     = new ListingHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
+        $multipleDeleteForm = new Form();
+        $multipleDeleteForm->setAttribute('action',  $this->url()->fromRoute('administration/model', array('action' => 'delete-multiple', 'model' => $requested_model)));
+        $multipleDeleteForm->setAttribute('method', 'post');
 
         return new ViewModel(array(
-            'model'         => $requested_model,
-            'listing'       => $listingHandler->getListing(),
-            'listingFields' => $listingHandler->getListingFieldsDefinitions()
+            'multipleDeleteForm' => $multipleDeleteForm,
+            'model'              => $requested_model,
+            'listing'            => $listingHandler->getListing(),
+            'listingFields'      => $listingHandler->getListingFieldsDefinitions()
         ));
     }
 
@@ -66,6 +72,7 @@ class ModelController extends AbstractActionController
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
                 $model->save($form->getData());
+                return $this->redirectToModelAction($requested_model, 'listing');
             }
         }
 
@@ -128,18 +135,70 @@ class ModelController extends AbstractActionController
         ));
     }
 
-    public function saveAction()
-    {
-        return new ViewModel();
-    }
-
     public function deleteAction()
     {
-        return true;
+        $requested_model = $this->params()->fromRoute('model');
+        $requested_item  = $this->params()->fromRoute('item');
+
+        $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        if (!$model->isInitialised()) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            $viewModel       = new ViewModel(array(
+                'modelName'  =>  $requested_model,
+                'errors' => $this->errors
+            ));
+            return $viewModel->setTemplate('error/admin/model');
+        }
+
+
+        try {
+            $model->deleteItemById($requested_item);
+            return $this->redirectToModelAction($requested_model, 'index');
+        }
+        catch (\Exception $ex) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            $viewModel       = new ViewModel(array(
+                'modelName'  =>  $requested_model,
+                'errors'     => $this->errors
+            ));
+            return $viewModel->setTemplate('error/admin/model');
+        }
     }
 
     public function deleteMultipleAction()
     {
-        return true;
+        $requested_model = $this->params()->fromRoute('model');
+        $itemsToDelete   = $this->getRequest()->getPost('itemsToDelete');
+
+        $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        if (!$model->isInitialised()) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            $viewModel       = new ViewModel(array(
+                'modelName'  =>  $requested_model,
+                'errors' => $this->errors
+            ));
+            return $viewModel->setTemplate('error/admin/model');
+        }
+
+        try {
+            $model->deleteMultipleItemsById($itemsToDelete);
+            return $this->redirectToModelAction($requested_model, 'index');
+        }
+        catch (\Exception $ex) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            $viewModel       = new ViewModel(array(
+                'modelName'  =>  $requested_model,
+                'errors'     => $this->errors
+            ));
+            return $viewModel->setTemplate('error/admin/model');
+        }
+    }
+
+    protected function redirectToModelAction($model, $action)
+    {
+        return $this->redirect()->toRoute('administration/model', array(
+            'action' => $action,
+            'model'  => $model
+        ));
     }
 }
