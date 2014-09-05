@@ -159,6 +159,8 @@ class FormHandler
                 foreach ($values as $languageId => $fieldValue) {
                     $returnArray[$field . '[' . $languageId . ']'] = $fieldValue;
                 }
+            } elseif (in_array($field,  $this->modelHandler->getModelManager()->getIntegers()) && empty($values)) {
+                $returnArray[$field] = 0;
             } else {
                 $returnArray[$field] = $values;
             }

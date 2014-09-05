@@ -340,11 +340,13 @@ class ModelManager extends AbstractManager
             $inputFilter->add(
                 array(
                     'name' => $integer,
+                    'required' => false,
+                    'allowEmpty' => true,
                     'validators' => array(
                         array(
                             'name'  => 'Int',
                         )
-                    )
+                    ),
                 )
             );
         }
