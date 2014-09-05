@@ -72,7 +72,7 @@ class ModelController extends AbstractActionController
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
                 $model->save($form->getData());
-                return $this->redirectToModelAction($requested_model, 'listing');
+                return $this->redirectToModelAction($requested_model, 'index');
             }
         }
 
