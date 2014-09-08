@@ -107,8 +107,7 @@ class ModelController extends AbstractActionController
             $item = $model->getItemById($requested_item);
             $form->setInputFilter($model->getModelManager()->getInputFilter());
             $form->setData($formManager->preparePostData($item));
-        }
-        catch (\Exception $ex) {
+        } catch (\Exception $ex) {
             $this->errors = array_merge($this->errors, $model->getErrors());
             $viewModel       = new ViewModel(array(
                 'modelName'  =>  $requested_model,

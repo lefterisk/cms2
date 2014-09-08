@@ -37,12 +37,13 @@ return array(
     ),
     "max_tree_depth"  => 0,
     "listing_fields"  => array('pipes_date','pipes_boolean','pipes1'),
-    "required_fields" => array(),
     "form_manager"    => array(
 //        "tab_name" => array(
 //            "field_name"
 //        )
     ),
-    "input_filters"   => array(),
+    "input_filters"   => array(
+
+    ),
     "action_manager" => ""
 );

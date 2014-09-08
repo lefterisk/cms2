@@ -1,7 +1,9 @@
 <?php
 namespace Administration\Helper;
 
+use Administration\Helper\DbGateway\ModelTable;
 use Administration\Helper\DbGateway\SiteLanguageHelper;
+use Administration\Helper\Manager\RelationManager;
 use Zend\Form\Form;
 
 class FormHandler
@@ -28,8 +30,9 @@ class FormHandler
     private function getDefaultTabManager()
     {
         $tabManager = array();
-        if (count($this->modelHandler->getModelManager()->getSimpleFields()) > 0) {
-            $tabManager['simple_fields'] = $this->modelHandler->getModelManager()->getSimpleFields();
+        $firstTabFields = array_merge($this->modelHandler->getRelationFieldsNames(),$this->modelHandler->getModelManager()->getSimpleFields());
+        if (count($firstTabFields) > 0) {
+            $tabManager['simple_fields'] = $firstTabFields;
         }
         if (count($this->modelHandler->getModelManager()->getAdvancedFields()) > 0) {
             $tabManager['editor_fields'] = $this->modelHandler->getModelManager()->getAdvancedFields();
@@ -136,6 +139,40 @@ class FormHandler
                     ),
                     'attributes' => array_merge($attributes,array('placeholder' => $name)),
                 ));
+            }
+        }
+        $form = $this->addRelationFieldsToForm($form);
+        return $form;
+    }
+
+    protected function addRelationFieldsToForm(Form $form)
+    {
+        foreach($this->modelHandler->getRelationManagers() as $relation) {
+            $relationManager   = $relation['manager'];
+            $relatedModelTable = $relation['related_model_table'];
+            if ($relationManager instanceof RelationManager && $relatedModelTable instanceof ModelTable) {
+                if ($relationManager->requiresColumn()) {
+                    //if requiresColumn = true we show a single choice select drop-down
+                    $valueOptions = array('0' => 'Please Choose');
+                    foreach ($relatedModelTable->fetchForRelationSelect($relationManager->getFieldsToReturn()) as $relationData) {
+                        $valueOptions[$relationData->id] = $relationData->name;
+                    }
+                    $form->add(array(
+                        'type'       => 'Zend\Form\Element\Select',
+                        'name'       => $relationManager->getFieldName(),
+                        'options'    => array(
+                            'label'         => $relationManager->getFieldName(),
+                            'value_options' => $valueOptions,
+                        ),
+                        'attributes' => array(
+                            'class' => 'form-control'
+                        )
+                    ));
+
+                } elseif ($relationManager->requiresTable()) {
+                    //Else if requiresTable = true show a multi-choice select box
+
+                }
             }
         }
         return $form;

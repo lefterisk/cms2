@@ -30,6 +30,11 @@ class RelationManager extends AbstractManager
         return false;
     }
 
+    public function getFieldsToReturn()
+    {
+        return $this->definition['fields_for_select'];
+    }
+
     public function getTableName()
     {
         return $this->definition['lookup_table_name'];
@@ -38,6 +43,11 @@ class RelationManager extends AbstractManager
     public function getColumn()
     {
         return $this->related_model_prefix . 'id';
+    }
+
+    public function getFieldName()
+    {
+        return $this->getColumn();
     }
 
     public function getTableColumnsDefinition()

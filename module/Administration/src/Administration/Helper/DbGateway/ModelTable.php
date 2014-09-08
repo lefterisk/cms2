@@ -28,10 +28,18 @@ class ModelTable extends AbstractTable
                 foreach ($whereDefinitions  as $field => $value) {
                     $predicate->equalTo($field, $value);
                 }
+                $select->where($predicate);
             }
-
-            $select->where($predicate);
         });
         return $result;
+    }
+
+    public function fetchForRelationSelect(Array $fields, $where = array())
+    {
+        $query = $this->tableGateway->select($fields);
+        if (is_array($where) && !empty($where) || $where instanceof Predicate) {
+            $query->where($where);
+        }
+        return $query;
     }
 }

@@ -77,6 +77,11 @@ class ModelHandler
         return $this->translationManager;
     }
 
+    public function getRelationManagers()
+    {
+        return $this->relationManagers;
+    }
+
     public function getErrors()
     {
         return $this->errors;
@@ -111,12 +116,17 @@ class ModelHandler
                 $relatedModelManager = new ModelManager($relatedModelDefinition);
                 $relationManager     = new RelationManager($relation, $this->modelManager->getPrefix(),$relatedModelManager->getPrefix());
                 $this->relationManagers[$name]['manager'] = $relationManager;
+                $this->relationManagers[$name]['related_model_table'] = new ModelTable(
+                    new CmsTableGateway(
+                        $relation['related_model'],
+                        $this->adapter
+                    ),
+                    $relationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync()
+                );
 
                 if ($relationManager->requiresTable()) {
-                    $gateway =  new CmsTableGateway($relationManager->getTableName(), $this->adapter);
-                    $this->relationManagers[$name]['table'] = new ModelTable($gateway, $relationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
-                } else {
-                    $this->relationManagers[$name]['table'] = false;
+                    $gateway = new CmsTableGateway($relationManager->getTableName(), $this->adapter);
+                    $this->relationManagers[$name]['relation_table'] = new ModelTable($gateway, $relationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
                 }
 
                 if ($relationManager->requiresColumn()) {
@@ -198,13 +208,25 @@ class ModelHandler
         }
     }
 
+    public function getRelationFieldsNames()
+    {
+        $fieldNames = array();
+        foreach($this->getRelationManagers() as $relation) {
+            $relationManager = $relation['manager'];
+            if ($relationManager instanceof RelationManager) {
+                $fieldNames[] = $relationManager->getFieldName();
+            }
+        }
+        return $fieldNames;
+    }
+
     public function save(Array $data)
     {
         $mainTableFields        = array();
         $translationTableFields = array();
 
         foreach ($data as $fieldName => $fieldValue) {
-            if (in_array( $fieldName, $this->modelManager->getAllNonMultilingualFields())) {
+            if (in_array( $fieldName, array_merge($this->modelManager->getAllNonMultilingualFields(),$this->getRelationFieldsNames()))) {
                 $mainTableFields[$fieldName] = $fieldValue;
             }
             if (preg_match('/\[/', $fieldName)) {
