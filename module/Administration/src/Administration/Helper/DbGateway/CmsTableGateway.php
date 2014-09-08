@@ -92,4 +92,9 @@ class CmsTableGateway extends TableGateway
         }
         return "`" . $name . "`" . $fieldType;
     }
+
+    public function setColumns(Array $columns)
+    {
+        $this->columns = $columns;
+    }
 }

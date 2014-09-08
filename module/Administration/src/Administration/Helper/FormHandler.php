@@ -151,28 +151,35 @@ class FormHandler
             $relationManager   = $relation['manager'];
             $relatedModelTable = $relation['related_model_table'];
             if ($relationManager instanceof RelationManager && $relatedModelTable instanceof ModelTable) {
+                $valueOptions = array();
+                foreach ($relatedModelTable->fetchForRelationSelect($relationManager->getFieldsToReturn()) as $relationData) {
+                    $valueOptions[$relationData->id] = '';
+                    foreach ($relationManager->getFieldsToReturn() as $returnedField) {
+                        $valueOptions[$relationData->id] .= $relationData->{$returnedField} . ' ';
+                    }
+                }
+
+                $multiple     = '';
                 if ($relationManager->requiresColumn()) {
                     //if requiresColumn = true we show a single choice select drop-down
                     $valueOptions = array('0' => 'Please Choose');
-                    foreach ($relatedModelTable->fetchForRelationSelect($relationManager->getFieldsToReturn()) as $relationData) {
-                        $valueOptions[$relationData->id] = $relationData->name;
-                    }
-                    $form->add(array(
-                        'type'       => 'Zend\Form\Element\Select',
-                        'name'       => $relationManager->getFieldName(),
-                        'options'    => array(
-                            'label'         => $relationManager->getFieldName(),
-                            'value_options' => $valueOptions,
-                        ),
-                        'attributes' => array(
-                            'class' => 'form-control'
-                        )
-                    ));
-
                 } elseif ($relationManager->requiresTable()) {
                     //Else if requiresTable = true show a multi-choice select box
-
+                    $multiple     = 'multiple';
                 }
+
+                $form->add(array(
+                    'type'       => 'Zend\Form\Element\Select',
+                    'name'       => $relationManager->getFieldName(),
+                    'options'    => array(
+                        'label'         => $relationManager->getFieldName(),
+                        'value_options' => $valueOptions,
+                    ),
+                    'attributes' => array(
+                        'class'    => 'form-control',
+                        'multiple' => $multiple
+                    )
+                ));
             }
         }
         return $form;

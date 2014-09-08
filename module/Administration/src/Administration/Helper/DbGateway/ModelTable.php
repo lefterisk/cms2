@@ -36,7 +36,12 @@ class ModelTable extends AbstractTable
 
     public function fetchForRelationSelect(Array $fields, $where = array())
     {
-        $query = $this->tableGateway->select($fields);
+        if (!empty($fields)) {
+            $this->tableGateway->setColumns(array_merge($fields, array('id')));
+        }
+
+        $query = $this->tableGateway->select();
+
         if (is_array($where) && !empty($where) || $where instanceof Predicate) {
             $query->where($where);
         }

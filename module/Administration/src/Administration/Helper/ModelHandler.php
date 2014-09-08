@@ -220,6 +220,20 @@ class ModelHandler
         return $fieldNames;
     }
 
+    public function getOverAllInputFilter()
+    {
+        //main table inputfilter
+        $inputFilter = $this->modelManager->getInputFilter();
+        //relations inputfilters
+        foreach($this->getRelationManagers() as $relation) {
+            $relationManager = $relation['manager'];
+            if ($relationManager instanceof RelationManager) {
+                $inputFilter = $relationManager->getInputFilter($inputFilter);
+            }
+        }
+        return $inputFilter;
+    }
+
     public function save(Array $data)
     {
         $mainTableFields        = array();

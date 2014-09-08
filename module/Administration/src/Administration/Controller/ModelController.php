@@ -13,6 +13,7 @@ use Administration\Helper\FormHandler;
 use Administration\Helper\ListingHandler;
 use Administration\Helper\ModelHandler;
 use Zend\Form\Form;
+use Zend\Json\Server\Request;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -67,7 +68,7 @@ class ModelController extends AbstractActionController
         $form    = $formManager->getForm();
 
         if ($request->isPost()) {
-            $form->setInputFilter($model->getModelManager()->getInputFilter());
+            $form->setInputFilter($model->getOverAllInputFilter());
 
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
@@ -105,7 +106,7 @@ class ModelController extends AbstractActionController
 
         try {
             $item = $model->getItemById($requested_item);
-            $form->setInputFilter($model->getModelManager()->getInputFilter());
+            $form->setInputFilter($model->getOverAllInputFilter());
             $form->setData($formManager->preparePostData($item));
         } catch (\Exception $ex) {
             $this->errors = array_merge($this->errors, $model->getErrors());
@@ -117,7 +118,7 @@ class ModelController extends AbstractActionController
         }
 
         if ($request->isPost()) {
-            $form->setInputFilter($model->getModelManager()->getInputFilter());
+            $form->setInputFilter($model->getOverAllInputFilter());
 
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {

@@ -1,6 +1,7 @@
 <?php
 namespace Administration\Helper\Manager;
 
+
 class RelationManager extends AbstractManager
 {
     protected $definition;
@@ -64,5 +65,15 @@ class RelationManager extends AbstractManager
             $this->model_prefix . 'id',
             $this->related_model_prefix . 'id'
         );
+    }
+
+    public function getInputFilter($inputFilter = null)
+    {
+        $inputFilter = parent::getInputFilter();
+        $inputFilter->add(array(
+            'name' => $this->getColumn(),
+            'required' => false,
+        ));
+        return $inputFilter;
     }
 }

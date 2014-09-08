@@ -2,6 +2,8 @@
 namespace Administration\Helper\Manager;
 
 
+use Zend\InputFilter\InputFilter;
+
 abstract class  AbstractManager
 {
     abstract public function getTableName();
@@ -26,5 +28,13 @@ abstract class  AbstractManager
             }
         }
         return $fields;
+    }
+
+    public function getInputFilter($inputFilter = null)
+    {
+        if (!$inputFilter instanceof InputFilter) {
+            $inputFilter = new InputFilter();
+        }
+        return $inputFilter;
     }
 }

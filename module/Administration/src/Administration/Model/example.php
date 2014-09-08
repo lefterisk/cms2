@@ -23,12 +23,12 @@ return array(
             )
         ),
         "relations" => array(
-//            "field_name" => array(
-//                "related_model"     => "example",
-//                "relation_type"     => "manyToOne", // 'oneToMany', 'manyToOne', 'manyToMany'
-//                "fields_for_select" => array(),
-//                "lookup_table_name" => "",
-//            ),
+            "field_name" => array(
+                "related_model"     => "user",
+                "relation_type"     => "manyToMany", // 'oneToMany', 'manyToOne', 'manyToMany'
+                "fields_for_select" => array('email'),
+                "lookup_table_name" => "example_to_user",
+            ),
         ),
         "multilingual_varchars"   => array('pipes_multi_var'),
         "multilingual_texts"      => array(),
