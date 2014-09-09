@@ -104,26 +104,30 @@ class ModelController extends AbstractActionController
         $request = $this->getRequest();
         $form    = $formManager->getForm();
 
+        if ($request->isPost()) {
+            $form->setInputFilter($model->getOverAllInputFilter());
+            $form->setData($formManager->preparePostData($request->getPost()));
+
+            if ($form->isValid()) {
+                $model->save($form->getData());
+                $redirect = $this->params()->fromPost('redirect_after_save');
+                if (!empty($redirect) && $redirect == 1) {
+                    return $this->redirectToModelAction($requested_model, 'index');
+                }
+            }
+        }
+
         try {
             $item = $model->getItemById($requested_item);
             $form->setInputFilter($model->getOverAllInputFilter());
             $form->setData($formManager->preparePostData($item));
         } catch (\Exception $ex) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
-                'modelName'  =>  $requested_model,
-                'errors'     => $this->errors
+            $viewModel    = new ViewModel(array(
+                'modelName' =>  $requested_model,
+                'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
-        }
-
-        if ($request->isPost()) {
-            $form->setInputFilter($model->getOverAllInputFilter());
-
-            $form->setData($formManager->preparePostData($request->getPost()));
-            if ($form->isValid()) {
-                $model->save($form->getData());
-            }
         }
 
         return new ViewModel(array(
@@ -149,7 +153,6 @@ class ModelController extends AbstractActionController
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
-
 
         try {
             $model->deleteItemById($requested_item);

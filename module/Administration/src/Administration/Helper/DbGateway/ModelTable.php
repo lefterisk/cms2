@@ -47,4 +47,13 @@ class ModelTable extends AbstractTable
         }
         return $query;
     }
+
+    public function save($id, Array $fieldValues)
+    {
+        if (!empty($id)) {
+            $this->getTableGateway()->update($fieldValues, array('id' => $id));
+        } else {
+            $this->getTableGateway()->insert($fieldValues);
+        }
+    }
 }

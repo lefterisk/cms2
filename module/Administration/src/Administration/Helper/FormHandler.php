@@ -55,6 +55,11 @@ class FormHandler
             'name' => 'id',
         ));
 
+        $form->add(array(
+            'type' => 'hidden',
+            'name' => 'redirect_after_save',
+        ));
+
         foreach ($this->modelHandler->getModelManager()->getAllFields() as $field) {
             $type          = 'Zend\Form\Element\Text';
             $attributes    = array();

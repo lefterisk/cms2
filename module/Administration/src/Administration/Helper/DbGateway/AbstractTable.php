@@ -37,4 +37,9 @@ class AbstractTable
     {
         return $this->tableGateway;
     }
+
+    public function getLastInsertValue()
+    {
+        return $this->getTableGateway()->getLastInsertValue();
+    }
 }

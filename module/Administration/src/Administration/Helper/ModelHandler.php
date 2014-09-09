@@ -3,6 +3,7 @@ namespace Administration\Helper;
 
 use Administration\Helper\DbGateway\CmsTableGateway;
 use Administration\Helper\DbGateway\ModelTable;
+use Administration\Helper\DbGateway\RelationTable;
 use Administration\Helper\DbGateway\TranslationTable;
 use Administration\Helper\Manager\ModelManager;
 use Administration\Helper\Manager\RelationManager;
@@ -110,13 +111,13 @@ class ModelHandler
 
     private function initialiseRelationsTables()
     {
-        foreach ($this->modelManager->getRelations() as  $name => $relation) {
+        foreach ($this->modelManager->getRelations() as $relation) {
             $relatedModelDefinition = $this->modelChecks($relation['related_model'], 'relation');
             if ($relatedModelDefinition) {
                 $relatedModelManager = new ModelManager($relatedModelDefinition);
                 $relationManager     = new RelationManager($relation, $this->modelManager->getPrefix(),$relatedModelManager->getPrefix());
-                $this->relationManagers[$name]['manager'] = $relationManager;
-                $this->relationManagers[$name]['related_model_table'] = new ModelTable(
+                $this->relationManagers[$relationManager->getFieldName()]['manager'] = $relationManager;
+                $this->relationManagers[$relationManager->getFieldName()]['related_model_table'] = new ModelTable(
                     new CmsTableGateway(
                         $relation['related_model'],
                         $this->adapter
@@ -126,7 +127,7 @@ class ModelHandler
 
                 if ($relationManager->requiresTable()) {
                     $gateway = new CmsTableGateway($relationManager->getTableName(), $this->adapter);
-                    $this->relationManagers[$name]['relation_table'] = new ModelTable($gateway, $relationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
+                    $this->relationManagers[$relationManager->getFieldName()]['relation_table'] = new RelationTable($gateway, $relationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
                 }
 
                 if ($relationManager->requiresColumn()) {
@@ -208,23 +209,40 @@ class ModelHandler
         }
     }
 
-    public function getRelationFieldsNames()
+    public function getRelationFieldsForMainTable()
     {
         $fieldNames = array();
         foreach($this->getRelationManagers() as $relation) {
             $relationManager = $relation['manager'];
-            if ($relationManager instanceof RelationManager) {
+            if ($relationManager instanceof RelationManager && $relationManager->requiresColumn()) {
                 $fieldNames[] = $relationManager->getFieldName();
             }
         }
         return $fieldNames;
     }
 
+    public function getRelationFieldsForRelationTables()
+    {
+        $fieldNames = array();
+        foreach($this->getRelationManagers() as $relation) {
+            $relationManager = $relation['manager'];
+            if ($relationManager instanceof RelationManager && $relationManager->requiresTable()) {
+                $fieldNames[$relationManager->getTableName()] = $relationManager->getFieldName();
+            }
+        }
+        return $fieldNames;
+    }
+
+    public function getRelationFieldsNames()
+    {
+        return array_merge($this->getRelationFieldsForMainTable(), $this->getRelationFieldsForRelationTables());
+    }
+
     public function getOverAllInputFilter()
     {
-        //main table inputfilter
+        //main table input-filter
         $inputFilter = $this->modelManager->getInputFilter();
-        //relations inputfilters
+        //relations input-filters
         foreach($this->getRelationManagers() as $relation) {
             $relationManager = $relation['manager'];
             if ($relationManager instanceof RelationManager) {
@@ -236,11 +254,13 @@ class ModelHandler
 
     public function save(Array $data)
     {
-        $mainTableFields        = array();
-        $translationTableFields = array();
+        $mainTableFields         = array();
+        $translationTableFields  = array();
+        $relationTablesFields    = array();
+        $relationsTablesToFields = $this->getRelationFieldsForRelationTables();
 
         foreach ($data as $fieldName => $fieldValue) {
-            if (in_array( $fieldName, array_merge($this->modelManager->getAllNonMultilingualFields(),$this->getRelationFieldsNames()))) {
+            if (in_array( $fieldName, array_merge($this->modelManager->getAllNonMultilingualFields(),$this->getRelationFieldsForMainTable()))) {
                 $mainTableFields[$fieldName] = $fieldValue;
             }
             if (preg_match('/\[/', $fieldName)) {
@@ -253,23 +273,46 @@ class ModelHandler
                     $translationTableFields[$languageId][$actualName] = $fieldValue;
                 }
             }
-        }
-        if (isset($data['id']) && !empty($data['id'])) {
-            $this->getModelTable()->getTableGateway()->update($mainTableFields, array('id' => $data['id']));
-            foreach ($translationTableFields as $languageId => $fields) {
-                $this->getTranslationTable()->getTableGateway()->update($fields, array($this->getModelManager()->getPrefix() . 'id' => $data['id'], 'language_id' => $languageId));
+            if (in_array($fieldName, $relationsTablesToFields)) {
+                foreach ($relationsTablesToFields as $table => $field) {
+                    if ($field == $fieldName) {
+                        $relationTablesFields[$table] = array('field' => $fieldName, 'field_values' => $fieldValue);
+                    }
+                }
             }
+        }
+
+        if (isset($data['id']) && !empty($data['id'])) {
+            $this->getModelTable()->save($data['id'], $mainTableFields);
+            foreach ($translationTableFields as $languageId => $fields) {
+                $this->getTranslationTable()->save($fields, array($this->getModelManager()->getPrefix() . 'id' => $data['id'], 'language_id' => $languageId));
+            }
+            $this->saveRelationTables($relationTablesFields, $data['id']);
         } else {
-            $this->getModelTable()->getTableGateway()->insert($mainTableFields);
+            $this->getModelTable()->save(null, $mainTableFields);
             foreach ($translationTableFields as $languageId => $fields) {
                 $fields = array_merge(
                     $fields,
                     array(
-                        $this->getModelManager()->getPrefix() . 'id' =>  $this->getModelTable()->getTableGateway()->getLastInsertValue(),
+                        $this->getModelManager()->getPrefix() . 'id' =>  $this->getModelTable()->getLastInsertValue(),
                         'language_id' => $languageId
                     )
                 );
-                $this->getTranslationTable()->getTableGateway()->insert($fields);
+                $this->getTranslationTable()->save($fields);
+            }
+            $this->saveRelationTables($relationTablesFields, $this->getModelTable()->getLastInsertValue());
+        }
+    }
+
+    protected function saveRelationTables(Array $tableFields, $id)
+    {
+        $relationManagers = $this->getRelationManagers();
+        foreach ($tableFields as $field) {
+            if (array_key_exists($field['field'], $relationManagers) && array_key_exists('relation_table', $relationManagers[$field['field']])) {
+                $relationTable = $relationManagers[$field['field']]['relation_table'];
+                if ($relationTable instanceof RelationTable) {
+                    $relationTable->save($id, $this->getModelManager()->getPrefix() . 'id', $field['field'], $field['field_values']);
+                }
             }
         }
     }
@@ -282,12 +325,12 @@ class ModelHandler
             throw new \Exception();
         }
 
-        $mainTableData           = $this->getModelTable()->getTableGateway()->select(array('id' => $id))->current();
+        $mainTableData = $this->getModelTable()->getTableGateway()->select(array('id' => $id))->current();
         if (!$mainTableData) {
             $this->errors[] = $this->errorMsgArray['ERROR_6'];
             throw new \Exception();
         }
-        $translationData         = array();
+        $translationData = array();
         if ($this->modelManager->isMultiLingual()) {
             $rawTranslationTableData = $this->getTranslationTable()->getTableGateway()->select(array($this->getModelManager()->getPrefix() . 'id' => $id));
             foreach ($rawTranslationTableData as $translation) {
@@ -299,7 +342,19 @@ class ModelHandler
             }
         }
 
-        return array_merge($mainTableData->getArrayCopy(),$translationData);
+        $relationData = array();
+        foreach ($this->getRelationManagers() as $relation) {
+            $manager = $relation['manager'];
+            $table   = $relation['relation_table'];
+            if ($manager instanceof RelationManager && $manager->requiresTable() && $table instanceof RelationTable) {
+                $results = $table->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
+                foreach ($results as $result) {
+                    $relationData[$manager->getFieldName()] = $result->{$manager->getFieldName()};
+                }
+            }
+        }
+
+        return array_merge($mainTableData->getArrayCopy(),$translationData,$relationData);
     }
 
     public function deleteItemById($id, $hard = true)
@@ -320,6 +375,13 @@ class ModelHandler
                 $rowsAffected = $this->getModelTable()->getTableGateway()->delete(array('id' => $id));
                 if ($rowsAffected > 0 && $this->modelManager->isMultiLingual()) {
                     $this->getTranslationTable()->getTableGateway()->delete(array($this->getModelManager()->getPrefix() . 'id' => $id));
+                }
+                foreach ($this->getRelationManagers() as $relation) {
+                    $manager = $relation['manager'];
+                    $table   = $relation['relation_table'];
+                    if ($manager instanceof RelationManager && $manager->requiresTable() && $table instanceof RelationTable) {
+                        $table->delete($id, $this->modelManager->getPrefix() . 'id');
+                    }
                 }
             } else {
 

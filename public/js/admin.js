@@ -3,7 +3,6 @@ var App;
 /**
  * AppView, the main view/controller of the App
  *
- * @type @exp;Backbone@pro;View@call;extend
  */
 var AppView = Backbone.View.extend({
     el                 : 'body',
@@ -75,6 +74,14 @@ var AppView = Backbone.View.extend({
             "bInfo": true,
             "bAutoWidth": false,
             "aoColumnDefs": [{ 'bSortable': false, 'aTargets': [ 0] }]
+        });
+
+        $('.save_exit').bind('click', function(){
+            $(this).closest('form').find('input[name="redirect_after_save"]').val('1');
+        });
+
+        $('.save_stay').bind('click', function(){
+            $(this).closest('form').find('input[name="redirect_after_save"]').val('0');
         });
 
         $('.bootstrapSwitchIndex').bootstrapSwitch({

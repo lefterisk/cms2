@@ -14,6 +14,7 @@
     <?php echo $this->form()->openTag($form); ?>
     <?php echo $this->partial('administration/model/partials/form_errors.phtml', array('errors' => $form->getMessages())); ?>
     <?php echo $this->formElement($form->get('id')); ?>
+    <?php echo $this->formElement($form->get('redirect_after_save')); ?>
     <div class="nav-tabs-custom">
         <ul class="nav nav-tabs">
             <?php $tabCounter = 0; ?>
@@ -40,8 +41,19 @@
             <?php endforeach; ?>
         </div>
     </div>
-    <button type="submit" class="btn btn-primary">
-        <span class="glyphicon glyphicon-floppy-disk"></span>&nbsp;<?php echo $this->translate('Save'); ?>
-    </button>
+    <div class="btn-group">
+        <button type="submit" class="btn btn-primary save_stay">
+            <span class="glyphicon glyphicon-floppy-disk"></span>&nbsp;<?php echo $this->translate('Save'); ?>
+        </button>
+
+        <button type="submit" class="btn btn-success save_exit">
+            <span class="glyphicon glyphicon glyphicon-floppy-open"></span>&nbsp;<?php echo $this->translate('Save & Exit'); ?>
+        </button>
+
+        <a class="btn btn-warning" href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model)); ?>">
+            <span class="glyphicon glyphicon glyphicon-share-alt"></span>&nbsp;<?php echo $this->translate('Exit'); ?>
+        </a>
+    </div>
+
     <?php echo $this->form()->closeTag($form); ?>
 </section>
