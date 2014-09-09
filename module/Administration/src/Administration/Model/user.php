@@ -26,7 +26,7 @@ return array(
             "field_name" => array(
                 "related_model"     => "user_group",
                 "relation_type"     => "manyToOne", // 'oneToMany', 'manyToOne', 'manyToMany'
-                "fields_for_select" => array(),
+                "fields_for_select" => array("name"),
                 "lookup_table_name" => "",
             ),
         ),

@@ -152,32 +152,32 @@ class FormHandler
 
     protected function addRelationFieldsToForm(Form $form)
     {
-        foreach($this->modelHandler->getRelationManagers() as $relation) {
-            $relationManager   = $relation['manager'];
-            $relatedModelTable = $relation['related_model_table'];
-            if ($relationManager instanceof RelationManager && $relatedModelTable instanceof ModelTable) {
+        foreach($this->modelHandler->getRelationHandlers() as $relationHandler) {
+            if ($relationHandler instanceof RelationHandler) {
+
                 $valueOptions = array();
-                foreach ($relatedModelTable->fetchForRelationSelect($relationManager->getFieldsToReturn()) as $relationData) {
+                $multiple     = '';
+
+                if ($relationHandler->getRelationManager()->requiresColumn()) {
+                    //if requiresColumn = true we show a single choice select drop-down
+                    $valueOptions = array('0' => 'Please Choose');
+                } elseif ($relationHandler->getRelationManager()->requiresTable()) {
+                    //Else if requiresTable = true show a multi-choice select box
+                    $multiple = 'multiple';
+                }
+
+                foreach ($relationHandler->getRelatedModelTable()->fetchForRelationSelect($relationHandler->getRelationManager()->getFieldsToReturn()) as $relationData) {
                     $valueOptions[$relationData->id] = '';
-                    foreach ($relationManager->getFieldsToReturn() as $returnedField) {
+                    foreach ($relationHandler->getRelationManager()->getFieldsToReturn() as $returnedField) {
                         $valueOptions[$relationData->id] .= $relationData->{$returnedField} . ' ';
                     }
                 }
 
-                $multiple     = '';
-                if ($relationManager->requiresColumn()) {
-                    //if requiresColumn = true we show a single choice select drop-down
-                    $valueOptions = array('0' => 'Please Choose');
-                } elseif ($relationManager->requiresTable()) {
-                    //Else if requiresTable = true show a multi-choice select box
-                    $multiple     = 'multiple';
-                }
-
                 $form->add(array(
                     'type'       => 'Zend\Form\Element\Select',
-                    'name'       => $relationManager->getFieldName(),
+                    'name'       => $relationHandler->getRelationManager()->getFieldName(),
                     'options'    => array(
-                        'label'         => $relationManager->getFieldName(),
+                        'label'         => $relationHandler->getRelationManager()->getFieldName(),
                         'value_options' => $valueOptions,
                     ),
                     'attributes' => array(
@@ -187,6 +187,12 @@ class FormHandler
                 ));
             }
         }
+        return $form;
+    }
+
+    protected function addCustomSelectionFieldsToForm(Form $form)
+    {
+
         return $form;
     }
 

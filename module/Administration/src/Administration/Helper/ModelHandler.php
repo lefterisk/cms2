@@ -3,10 +3,8 @@ namespace Administration\Helper;
 
 use Administration\Helper\DbGateway\CmsTableGateway;
 use Administration\Helper\DbGateway\ModelTable;
-use Administration\Helper\DbGateway\RelationTable;
 use Administration\Helper\DbGateway\TranslationTable;
 use Administration\Helper\Manager\ModelManager;
-use Administration\Helper\Manager\RelationManager;
 use Administration\Helper\Manager\TranslationManager;
 use Administration\Helper\Validator\ModelValidator;
 use Zend\Code\Scanner\DirectoryScanner;
@@ -20,7 +18,7 @@ class ModelHandler
     private $availableModelsArray = array();
     private $modelManager;
     private $translationManager;
-    private $relationManagers  = array();
+    private $relationHandlers = array();
 
     protected $errorMsgArray = array(
         'ERROR_1'  => 'The requested Model does not exist!',
@@ -78,9 +76,9 @@ class ModelHandler
         return $this->translationManager;
     }
 
-    public function getRelationManagers()
+    public function getRelationHandlers()
     {
-        return $this->relationManagers;
+        return $this->relationHandlers;
     }
 
     public function getErrors()
@@ -114,29 +112,20 @@ class ModelHandler
         foreach ($this->modelManager->getRelations() as $relation) {
             $relatedModelDefinition = $this->modelChecks($relation['related_model'], 'relation');
             if ($relatedModelDefinition) {
-                $relatedModelManager = new ModelManager($relatedModelDefinition);
-                $relationManager     = new RelationManager($relation, $this->modelManager->getPrefix(),$relatedModelManager->getPrefix());
-                $this->relationManagers[$relationManager->getFieldName()]['manager'] = $relationManager;
-                $this->relationManagers[$relationManager->getFieldName()]['related_model_table'] = new ModelTable(
-                    new CmsTableGateway(
-                        $relation['related_model'],
-                        $this->adapter
-                    ),
-                    $relationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync()
-                );
-
-                if ($relationManager->requiresTable()) {
-                    $gateway = new CmsTableGateway($relationManager->getTableName(), $this->adapter);
-                    $this->relationManagers[$relationManager->getFieldName()]['relation_table'] = new RelationTable($gateway, $relationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
-                }
-
-                if ($relationManager->requiresColumn()) {
-                    //add the relation column to the main table
-                    $this->modelManager->setRelationField($relationManager->getColumn());
-                }
+                $relationHandler = new RelationHandler($relation, $relatedModelDefinition, $this->getModelManager(), $this->adapter);
+                $this->relationHandlers[$relationHandler->getRelationManager()->getFieldName()] = $relationHandler;
             }
         }
-        return false;
+        $this->setRelationFieldsToMainModel();
+    }
+
+    private function setRelationFieldsToMainModel()
+    {
+        foreach($this->relationHandlers as $relationHandler) {
+            if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresColumn()) {
+                $this->modelManager->setRelationField($relationHandler->getRelationManager()->getColumn());
+            }
+        }
     }
 
 //    private function initialiseTableGateway($tableName, $tableFields)
@@ -212,10 +201,9 @@ class ModelHandler
     public function getRelationFieldsForMainTable()
     {
         $fieldNames = array();
-        foreach($this->getRelationManagers() as $relation) {
-            $relationManager = $relation['manager'];
-            if ($relationManager instanceof RelationManager && $relationManager->requiresColumn()) {
-                $fieldNames[] = $relationManager->getFieldName();
+        foreach($this->getRelationHandlers() as $relationHandler) {
+            if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresColumn()) {
+                $fieldNames[] = $relationHandler->getRelationManager()->getFieldName();
             }
         }
         return $fieldNames;
@@ -224,10 +212,9 @@ class ModelHandler
     public function getRelationFieldsForRelationTables()
     {
         $fieldNames = array();
-        foreach($this->getRelationManagers() as $relation) {
-            $relationManager = $relation['manager'];
-            if ($relationManager instanceof RelationManager && $relationManager->requiresTable()) {
-                $fieldNames[$relationManager->getTableName()] = $relationManager->getFieldName();
+        foreach($this->getRelationHandlers() as $relationHandler) {
+            if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresTable()) {
+                $fieldNames[$relationHandler->getRelationManager()->getTableName()] = $relationHandler->getRelationManager()->getFieldName();
             }
         }
         return $fieldNames;
@@ -243,10 +230,9 @@ class ModelHandler
         //main table input-filter
         $inputFilter = $this->modelManager->getInputFilter();
         //relations input-filters
-        foreach($this->getRelationManagers() as $relation) {
-            $relationManager = $relation['manager'];
-            if ($relationManager instanceof RelationManager) {
-                $inputFilter = $relationManager->getInputFilter($inputFilter);
+        foreach($this->getRelationHandlers() as $relationHandler) {
+            if ($relationHandler instanceof RelationHandler) {
+                $inputFilter = $relationHandler->getRelationManager()->getInputFilter($inputFilter);
             }
         }
         return $inputFilter;
@@ -306,12 +292,12 @@ class ModelHandler
 
     protected function saveRelationTables(Array $tableFields, $id)
     {
-        $relationManagers = $this->getRelationManagers();
+        $relationHandlers = $this->getRelationHandlers();
         foreach ($tableFields as $field) {
-            if (array_key_exists($field['field'], $relationManagers) && array_key_exists('relation_table', $relationManagers[$field['field']])) {
-                $relationTable = $relationManagers[$field['field']]['relation_table'];
-                if ($relationTable instanceof RelationTable) {
-                    $relationTable->save($id, $this->getModelManager()->getPrefix() . 'id', $field['field'], $field['field_values']);
+            if (array_key_exists($field['field'], $relationHandlers)) {
+                $relationHandler = $relationHandlers[$field['field']];
+                if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresTable()) {
+                    $relationHandler->getRelationTable()->save($id, $this->getModelManager()->getPrefix() . 'id', $field['field'], $field['field_values']);
                 }
             }
         }
@@ -343,17 +329,14 @@ class ModelHandler
         }
 
         $relationData = array();
-        foreach ($this->getRelationManagers() as $relation) {
-            $manager = $relation['manager'];
-            $table   = $relation['relation_table'];
-            if ($manager instanceof RelationManager && $manager->requiresTable() && $table instanceof RelationTable) {
-                $results = $table->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
+        foreach($this->getRelationHandlers() as $relationHandler) {
+            if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresTable()) {
+                $results = $relationHandler->getRelationTable()->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
                 foreach ($results as $result) {
-                    $relationData[$manager->getFieldName()] = $result->{$manager->getFieldName()};
+                    $relationData[$relationHandler->getRelationManager()->getFieldName()] = $result->{$relationHandler->getRelationManager()->getFieldName()};
                 }
             }
         }
-
         return array_merge($mainTableData->getArrayCopy(),$translationData,$relationData);
     }
 
@@ -376,11 +359,9 @@ class ModelHandler
                 if ($rowsAffected > 0 && $this->modelManager->isMultiLingual()) {
                     $this->getTranslationTable()->getTableGateway()->delete(array($this->getModelManager()->getPrefix() . 'id' => $id));
                 }
-                foreach ($this->getRelationManagers() as $relation) {
-                    $manager = $relation['manager'];
-                    $table   = $relation['relation_table'];
-                    if ($manager instanceof RelationManager && $manager->requiresTable() && $table instanceof RelationTable) {
-                        $table->delete($id, $this->modelManager->getPrefix() . 'id');
+                foreach($this->getRelationHandlers() as $relationHandler) {
+                    if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresTable()) {
+                        $relationHandler->getRelationTable()->delete($id, $this->modelManager->getPrefix() . 'id');
                     }
                 }
             } else {

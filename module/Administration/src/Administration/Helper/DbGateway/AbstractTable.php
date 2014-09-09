@@ -7,7 +7,7 @@ class AbstractTable
     protected $tableGateway;
     protected $tableColumns;
 
-    public function __construct( CmsTableGateway $tableGateway, Array $tableColumns, $modelDbSync = false)
+    public function __construct( CmsTableGateway $tableGateway, $tableColumns = array(), $modelDbSync = false)
     {
         $this->tableGateway = $tableGateway;
         $this->tableColumns  = $tableColumns;
