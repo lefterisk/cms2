@@ -21,6 +21,19 @@ return array(
                 ),
                 'may_terminate' => true,
                 'child_routes' => array(
+                    'login' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => '/login[/action/:action]',
+                            'constraints' => array(
+                                'action'        => '[a-zA-Z][a-zA-Z0-9_-]*'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Administration\Controller\Login',
+                                'action' => 'index'
+                            )
+                        )
+                    ),
                     'model' => array(
                         'type' => 'segment',
                         'options' => array(
@@ -65,6 +78,7 @@ return array(
         'invokables' => array(
             'Administration\Controller\Index' => 'Administration\Controller\IndexController',
             'Administration\Controller\Model' => 'Administration\Controller\ModelController',
+            'Administration\Controller\Login' => 'Administration\Controller\LoginController',
         ),
     ),
     // Configuration so that we have different layouts for different modules - combined with Module.php onBootstrap
