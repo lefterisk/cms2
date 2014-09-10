@@ -38,5 +38,5 @@ return array(
     "input_filters"   => array(
 
     ),
-    "action_manager" => ""
+    "action_manager" => array()
 );

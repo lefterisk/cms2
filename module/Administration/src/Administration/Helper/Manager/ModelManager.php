@@ -270,8 +270,6 @@ class ModelManager extends AbstractManager
             $this->getSimpleFields(),
             $this->getAdvancedFields(),
             $this->getAllFileFields()
-//            $this->getRelations(),
-//            $this->getCustomSelections()
         );
     }
 
@@ -349,35 +347,6 @@ class ModelManager extends AbstractManager
                 )
             );
         }
-//        /*THis is because ZF2 has select input as required by default*/
-//        var_dump($this->getRelationFields());
-//
-//        foreach ($this->getRelationFields() as $relation) {
-//            $inputFilter->add(array(
-//                'name' => $relation,
-//                'required' => false,
-//            ));
-//        }
-//        foreach ($this->getCustomSelections() as $selection) {
-//            $inputFilter->add(array(
-//                'name' => $selection->getFieldName(),
-//                'required' => false,
-//            ));
-//        }
-//        foreach ($this->getDates() as $date) {
-//            $inputFilter->add(array(
-//                'name' => $date,
-//                'required' => true,
-//                'validators' => array(
-//                    array(
-//                        'name'  => 'Zend\Validator\Date',
-//                        'options'  => array(
-//                            'format' => 'Y-m-d H:i:s'
-//                        )
-//                    ),
-//                )
-//            ));
-//        }
         return $inputFilter;
     }
 

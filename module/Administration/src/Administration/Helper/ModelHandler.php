@@ -19,6 +19,7 @@ class ModelHandler
     private $relationHandlers        = array();
     private $customSelectionHandlers = array();
     private $modelHelper;
+    private $actionManagerHandler;
 
     protected $errorMsgArray = array(
         'ERROR_1'  => 'The requested Model does not exist!',
@@ -40,8 +41,9 @@ class ModelHandler
         if (!$modelDefinitionArray) {
             return;
         }
-        $this->adapter      = $dbAdapter;
-        $this->modelManager = new ModelManager($modelDefinitionArray);
+        $this->adapter       = $dbAdapter;
+        $this->modelManager  = new ModelManager($modelDefinitionArray);
+        $this->actionManagerHandler = new ActionManagerHandler($this->getModelManager()->getActionManagers());
 
         $this->translationManager = new TranslationManager($this->modelManager);
         $this->translationTable   = $this->initialiseTranslationTable();
@@ -85,6 +87,11 @@ class ModelHandler
     public function getCustomSelectionHandlers()
     {
         return $this->customSelectionHandlers;
+    }
+
+    public function getActionManagerHandler()
+    {
+        return $this->actionManagerHandler;
     }
 
     public function getErrors()
@@ -273,6 +280,7 @@ class ModelHandler
 
     public function save(Array $data)
     {
+        $data                    = $this->getActionManagerHandler()->getActionProcessedData('preSave', $data);
         $mainTableFields         = array();
         $translationTableFields  = array();
         $relationTablesFields    = array();
@@ -332,6 +340,7 @@ class ModelHandler
             $this->saveRelationTables($relationTablesFields, $this->getModelTable()->getLastInsertValue());
             $this->saveCustomSelectionTables($customSelectionTablesFields, $this->getModelTable()->getLastInsertValue());
         }
+        $this->getActionManagerHandler()->getActionProcessedData('postSave', $data);
     }
 
     protected function saveRelationTables(Array $tableFields, $id)
@@ -368,6 +377,8 @@ class ModelHandler
             throw new \Exception();
         }
 
+        $id = $this->getActionManagerHandler()->getActionProcessedData('preSelect', $id);
+
         $mainTableData = $this->getModelTable()->getTableGateway()->select(array('id' => $id))->current();
         if (!$mainTableData) {
             $this->errors[] = $this->errorMsgArray['ERROR_6'];
@@ -403,7 +414,7 @@ class ModelHandler
                 }
             }
         }
-        return array_merge($mainTableData->getArrayCopy(),$translationData,$relationData,$customSelectionData);
+        return $this->getActionManagerHandler()->getActionProcessedData('postSelect', array_merge($mainTableData->getArrayCopy(),$translationData,$relationData,$customSelectionData));
     }
 
     public function deleteItemById($id, $hard = true)
@@ -418,6 +429,8 @@ class ModelHandler
             $this->errors[] = $this->errorMsgArray['ERROR_8'];
             throw new \Exception();
         }
+
+        $id = $this->getActionManagerHandler()->getActionProcessedData('preDelete', $id);
 
         try {
             if ($hard) {
@@ -435,6 +448,7 @@ class ModelHandler
                         $customSelectionHandler->getCustomSelectionTable()->delete($id, $this->modelManager->getPrefix() . 'id');
                     }
                 }
+                $this->getActionManagerHandler()->getActionProcessedData('postDelete', $id);
             } else {
                 //todo handle soft delete
             }

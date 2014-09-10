@@ -46,5 +46,25 @@ return array(
     "input_filters"   => array(
 
     ),
-    "action_manager" => ""
+    "action_manager" => array(
+        'preSave'    => function($data) {
+
+            return $data;
+        },
+        'postSave'   => function($data) {
+
+        },
+        'preSelect'  => function($id) {
+            return $id;
+        },
+        'postSelect' => function($data) {
+            return $data;
+        },
+        'preDelete'  => function($id) {
+            return $id;
+        },
+        'postDelete' => function($id) {
+
+        },
+    )
 );

@@ -45,5 +45,21 @@ return array(
     "input_filters"   => array(
 
     ),
-    "action_manager" => ""
+    "action_manager" => array(
+        'preSave'    => function($data) {
+            if (array_key_exists('password', $data) && empty($data['password'])) {
+                unset($data['password']);
+            } elseif (array_key_exists('password', $data) && !empty($data['password'])) {
+                $bCrypt           = new \Zend\Crypt\Password\Bcrypt();
+                $data['password'] = $bCrypt->create($data['password']);
+            }
+            return $data;
+        },
+        'postSelect' => function($data) {
+            if (array_key_exists('password', $data)) {
+                unset($data['password']);
+            }
+            return $data;
+        },
+    )
 );

@@ -17,6 +17,7 @@ class ModelValidator extends AbstractValidator
         'listing_fields'  => 'array',
         'form_manager'    => 'array',
         'input_filters'   => 'array',
+        'action_manager'  => 'array',
     );
     protected $modelSimpleFieldTypes  = array(
         'dates',
@@ -56,6 +57,9 @@ class ModelValidator extends AbstractValidator
 
         //Check form manager
         $this->checkFormManager();
+
+        //Check action manager
+        $this->checkActionManager();
 
         return parent::validate();
     }
@@ -159,6 +163,17 @@ class ModelValidator extends AbstractValidator
         if (array_key_exists('input_filters', $this->definition))
         {
             $validator = new InputFilterValidator($this->definition['input_filters']);
+            if (!$validator->validate()) {
+                $this->errors = array_merge($this->errors, $validator->getErrors());
+            }
+        }
+    }
+
+    private function checkActionManager()
+    {
+        if (array_key_exists('action_manager', $this->definition))
+        {
+            $validator = new ActionManagerValidator($this->definition['action_manager']);
             if (!$validator->validate()) {
                 $this->errors = array_merge($this->errors, $validator->getErrors());
             }
