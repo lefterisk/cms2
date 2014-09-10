@@ -16,10 +16,11 @@ return array(
         "integers"                => array('pipes_integer'),
         "files"                   => array('pipes_file'),
         "custom_selections"       => array(
-            "field_name" => array(
-                "options"           => array("key" => "value"),
-                "multiple"          => false,
-                "lookup_table_name" => ""
+            array(
+                "name"              => "field_name",
+                "options"           => array("0" => "value1", "1" => "value2"),
+                "multiple"          => true,
+                "lookup_table_name" => "example_to_cs"
             )
         ),
         "relations" => array(

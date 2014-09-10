@@ -2,22 +2,21 @@
 namespace Administration\Helper\Manager;
 
 
-class RelationManager extends AbstractManager
+class CustomSelectionManager extends AbstractManager
 {
     protected $definition;
     protected $model_prefix;
     protected $related_model_prefix;
 
-    public function __construct(Array $definition, $model_prefix, $related_model_prefix)
+    public function __construct(Array $definition, $model_prefix)
     {
         $this->definition           = $definition;
         $this->model_prefix         = $model_prefix;
-        $this->related_model_prefix = $related_model_prefix;
     }
 
     public function requiresTable()
     {
-        if ($this->definition['relation_type'] == 'manyToMany') {
+        if ($this->definition['multiple']) {
             return true;
         }
         return false;
@@ -25,15 +24,15 @@ class RelationManager extends AbstractManager
 
     public function requiresColumn()
     {
-        if ($this->definition['relation_type'] == 'manyToOne') {
+        if (!$this->definition['multiple']) {
             return true;
         }
         return false;
     }
 
-    public function getFieldsToReturn()
+    public function getOptionsForSelect()
     {
-        return $this->definition['fields_for_select'];
+        return $this->definition['options'];
     }
 
     public function getTableName()
@@ -43,7 +42,7 @@ class RelationManager extends AbstractManager
 
     public function getColumn()
     {
-        return $this->related_model_prefix . 'id';
+        return $this->definition['name'];
     }
 
     public function getFieldName()
@@ -55,7 +54,7 @@ class RelationManager extends AbstractManager
     {
         return array(
             $this->model_prefix . 'id' => 'integer',
-            $this->related_model_prefix . 'id' => 'integer'
+            $this->getColumn() => 'integer'
         );
     }
 
@@ -63,7 +62,7 @@ class RelationManager extends AbstractManager
     {
         return array(
             $this->model_prefix . 'id',
-            $this->related_model_prefix . 'id'
+            $this->getColumn()
         );
     }
 

@@ -103,11 +103,10 @@ class ModelController extends AbstractActionController
 
         $request = $this->getRequest();
         $form    = $formManager->getForm();
+        $form->setInputFilter($model->getOverAllInputFilter());
 
         if ($request->isPost()) {
-            $form->setInputFilter($model->getOverAllInputFilter());
             $form->setData($formManager->preparePostData($request->getPost()));
-
             if ($form->isValid()) {
                 $model->save($form->getData());
                 $redirect = $this->params()->fromPost('redirect_after_save');
@@ -119,7 +118,6 @@ class ModelController extends AbstractActionController
 
         try {
             $item = $model->getItemById($requested_item);
-            $form->setInputFilter($model->getOverAllInputFilter());
             $form->setData($formManager->preparePostData($item));
         } catch (\Exception $ex) {
             $this->errors = array_merge($this->errors, $model->getErrors());

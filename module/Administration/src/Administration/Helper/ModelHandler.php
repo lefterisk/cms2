@@ -7,7 +7,6 @@ use Administration\Helper\DbGateway\TranslationTable;
 use Administration\Helper\Manager\ModelManager;
 use Administration\Helper\Manager\TranslationManager;
 use Administration\Helper\Validator\ModelValidator;
-use Zend\Code\Scanner\DirectoryScanner;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\Filter\Int;
 
@@ -15,10 +14,11 @@ class ModelHandler
 {
     private $errors               = array();
     private $initialised          = false;
-    private $availableModelsArray = array();
     private $modelManager;
     private $translationManager;
-    private $relationHandlers = array();
+    private $relationHandlers        = array();
+    private $customSelectionHandlers = array();
+    private $modelHelper;
 
     protected $errorMsgArray = array(
         'ERROR_1'  => 'The requested Model does not exist!',
@@ -35,18 +35,19 @@ class ModelHandler
 
     public function __construct($model, AdapterInterface $dbAdapter)
     {
+        $this->modelHelper    = new ModelHelper();
         $modelDefinitionArray = $this->modelChecks($model, 'main');
         if (!$modelDefinitionArray) {
             return;
         }
-        $this->adapter = $dbAdapter;
-        
+        $this->adapter      = $dbAdapter;
         $this->modelManager = new ModelManager($modelDefinitionArray);
 
         $this->translationManager = new TranslationManager($this->modelManager);
         $this->translationTable   = $this->initialiseTranslationTable();
 
         $this->initialiseRelationsTables();
+        $this->initialiseCustomSelectionTables();
 
         //main table is initialised last so we have the relation & custom selection columns
         $this->modelTable   = $this->initialiseMainTable();
@@ -79,6 +80,11 @@ class ModelHandler
     public function getRelationHandlers()
     {
         return $this->relationHandlers;
+    }
+
+    public function getCustomSelectionHandlers()
+    {
+        return $this->customSelectionHandlers;
     }
 
     public function getErrors()
@@ -128,6 +134,24 @@ class ModelHandler
         }
     }
 
+    private function initialiseCustomSelectionTables()
+    {
+        foreach ($this->modelManager->getCustomSelections() as $customSelection) {
+            $customSelectionHandler = new CustomSelectionHandler($customSelection, $this->getModelManager(), $this->adapter);
+            $this->customSelectionHandlers[$customSelectionHandler->getCustomSelectionManager()->getFieldName()] = $customSelectionHandler;
+        }
+        $this->setCustomSelectionFieldsToMainModel();
+    }
+
+    private function setCustomSelectionFieldsToMainModel()
+    {
+        foreach($this->customSelectionHandlers as $customSelectionHandler) {
+            if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresColumn()) {
+                $this->modelManager->setCustomSelectionField($customSelectionHandler->getCustomSelectionManager()->getColumn());
+            }
+        }
+    }
+
 //    private function initialiseTableGateway($tableName, $tableFields)
 //    {
 //        $resultSetPrototype = new ResultSet();
@@ -135,36 +159,11 @@ class ModelHandler
 //        return new CmsTableGateway($tableName, $this->adapter, null, null);
 //    }
 
-    private function modelExists($model)
-    {
-        $modelsArray = $this->getAvailableModels();
-        if (array_key_exists($model, $modelsArray)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private function getAvailableModels()
-    {
-        if (empty($this->availableModelsArray)) {
-            $scanner = new DirectoryScanner(__DIR__ . '/../Model/');
-            $this->availableModelsArray = array();
-            if (is_array($scanner->getFiles())) {
-                foreach ($scanner->getFiles() as $model) {
-                    //Windows filesystem returns paths with forward slash
-                    $file = explode('/', str_replace('\\','/',$model));
-                    $this->availableModelsArray[str_replace('.php', '', array_pop($file))] = $model;
-                }
-            }
-        }
-        return $this->availableModelsArray;
-    }
-
     private function modelChecks($model, $type = 'main')
     {
-        if ($this->modelExists($model)) {
-            $modelDefinitionArray = require($this->availableModelsArray[$model]);
+        if ($this->modelHelper->modelExists($model)) {
+            $models = $this->modelHelper->getAvailableModels();
+            $modelDefinitionArray = require($models[$model]);
         } else {
             switch ($type) {
                 case 'main':
@@ -225,6 +224,33 @@ class ModelHandler
         return array_merge($this->getRelationFieldsForMainTable(), $this->getRelationFieldsForRelationTables());
     }
 
+    public function getCustomSelectionFieldsForMainTable()
+    {
+        $fieldNames = array();
+        foreach($this->getCustomSelectionHandlers() as $customSelectionHandler) {
+            if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresColumn()) {
+                $fieldNames[] = $customSelectionHandler->getCustomSelectionManager()->getFieldName();
+            }
+        }
+        return $fieldNames;
+    }
+
+    public function getCustomSelectionFieldsForCustomSelectionTables()
+    {
+        $fieldNames = array();
+        foreach($this->getCustomSelectionHandlers() as $customSelectionHandler) {
+            if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresTable()) {
+                $fieldNames[$customSelectionHandler->getCustomSelectionManager()->getTableName()] = $customSelectionHandler->getCustomSelectionManager()->getFieldName();
+            }
+        }
+        return $fieldNames;
+    }
+
+    public function getCustomSelectionFieldsNames()
+    {
+        return array_merge($this->getCustomSelectionFieldsForMainTable(), $this->getCustomSelectionFieldsForCustomSelectionTables());
+    }
+
     public function getOverAllInputFilter()
     {
         //main table input-filter
@@ -233,6 +259,13 @@ class ModelHandler
         foreach($this->getRelationHandlers() as $relationHandler) {
             if ($relationHandler instanceof RelationHandler) {
                 $inputFilter = $relationHandler->getRelationManager()->getInputFilter($inputFilter);
+            }
+        }
+
+        //custom selection input-filters
+        foreach($this->getCustomSelectionHandlers() as $customSelectionHandler) {
+            if ($customSelectionHandler instanceof CustomSelectionHandler) {
+                $inputFilter = $customSelectionHandler->getCustomSelectionManager()->getInputFilter($inputFilter);
             }
         }
         return $inputFilter;
@@ -244,9 +277,11 @@ class ModelHandler
         $translationTableFields  = array();
         $relationTablesFields    = array();
         $relationsTablesToFields = $this->getRelationFieldsForRelationTables();
+        $customSelectionTablesFields   = array();
+        $customSelectionTablesToFields = $this->getCustomSelectionFieldsForCustomSelectionTables();
 
         foreach ($data as $fieldName => $fieldValue) {
-            if (in_array( $fieldName, array_merge($this->modelManager->getAllNonMultilingualFields(),$this->getRelationFieldsForMainTable()))) {
+            if (in_array( $fieldName, array_merge($this->modelManager->getAllNonMultilingualFields(),$this->getRelationFieldsForMainTable(),$this->getCustomSelectionFieldsForMainTable()))) {
                 $mainTableFields[$fieldName] = $fieldValue;
             }
             if (preg_match('/\[/', $fieldName)) {
@@ -266,6 +301,13 @@ class ModelHandler
                     }
                 }
             }
+            if (in_array($fieldName, $customSelectionTablesToFields)) {
+                foreach ($customSelectionTablesToFields as $table => $field) {
+                    if ($field == $fieldName) {
+                        $customSelectionTablesFields[$table] = array('field' => $fieldName, 'field_values' => $fieldValue);
+                    }
+                }
+            }
         }
 
         if (isset($data['id']) && !empty($data['id'])) {
@@ -274,6 +316,7 @@ class ModelHandler
                 $this->getTranslationTable()->save($fields, array($this->getModelManager()->getPrefix() . 'id' => $data['id'], 'language_id' => $languageId));
             }
             $this->saveRelationTables($relationTablesFields, $data['id']);
+            $this->saveCustomSelectionTables($customSelectionTablesFields, $data['id']);
         } else {
             $this->getModelTable()->save(null, $mainTableFields);
             foreach ($translationTableFields as $languageId => $fields) {
@@ -287,6 +330,7 @@ class ModelHandler
                 $this->getTranslationTable()->save($fields);
             }
             $this->saveRelationTables($relationTablesFields, $this->getModelTable()->getLastInsertValue());
+            $this->saveCustomSelectionTables($customSelectionTablesFields, $this->getModelTable()->getLastInsertValue());
         }
     }
 
@@ -298,6 +342,19 @@ class ModelHandler
                 $relationHandler = $relationHandlers[$field['field']];
                 if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresTable()) {
                     $relationHandler->getRelationTable()->save($id, $this->getModelManager()->getPrefix() . 'id', $field['field'], $field['field_values']);
+                }
+            }
+        }
+    }
+
+    protected function saveCustomSelectionTables(Array $tableFields, $id)
+    {
+        $customSelectionHandlers = $this->getCustomSelectionHandlers();
+        foreach ($tableFields as $field) {
+            if (array_key_exists($field['field'], $customSelectionHandlers)) {
+                $customSelectionHandler = $customSelectionHandlers[$field['field']];
+                if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresTable()) {
+                    $customSelectionHandler->getCustomSelectionTable()->save($id, $this->getModelManager()->getPrefix() . 'id', $field['field'], $field['field_values']);
                 }
             }
         }
@@ -333,11 +390,20 @@ class ModelHandler
             if ($relationHandler instanceof RelationHandler && $relationHandler->getRelationManager()->requiresTable()) {
                 $results = $relationHandler->getRelationTable()->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
                 foreach ($results as $result) {
-                    $relationData[$relationHandler->getRelationManager()->getFieldName()] = $result->{$relationHandler->getRelationManager()->getFieldName()};
+                    $relationData[$relationHandler->getRelationManager()->getFieldName()][] = $result->{$relationHandler->getRelationManager()->getFieldName()};
                 }
             }
         }
-        return array_merge($mainTableData->getArrayCopy(),$translationData,$relationData);
+        $customSelectionData = array();
+        foreach($this->getCustomSelectionHandlers() as $customSelectionHandler) {
+            if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresTable()) {
+                $results = $customSelectionHandler->getCustomSelectionTable()->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
+                foreach ($results as $result) {
+                    $customSelectionData[$customSelectionHandler->getCustomSelectionManager()->getFieldName()][] = $result->{$customSelectionHandler->getCustomSelectionManager()->getFieldName()};
+                }
+            }
+        }
+        return array_merge($mainTableData->getArrayCopy(),$translationData,$relationData,$customSelectionData);
     }
 
     public function deleteItemById($id, $hard = true)
@@ -364,8 +430,13 @@ class ModelHandler
                         $relationHandler->getRelationTable()->delete($id, $this->modelManager->getPrefix() . 'id');
                     }
                 }
+                foreach($this->getCustomSelectionHandlers() as $customSelectionHandler) {
+                    if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresTable()) {
+                        $customSelectionHandler->getCustomSelectionTable()->delete($id, $this->modelManager->getPrefix() . 'id');
+                    }
+                }
             } else {
-
+                //todo handle soft delete
             }
         } catch (\Exception $ex) {
             $this->errors[] = $this->errorMsgArray['ERROR_9'];

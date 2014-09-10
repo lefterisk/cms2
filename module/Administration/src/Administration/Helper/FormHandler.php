@@ -1,9 +1,7 @@
 <?php
 namespace Administration\Helper;
 
-use Administration\Helper\DbGateway\ModelTable;
 use Administration\Helper\DbGateway\SiteLanguageHelper;
-use Administration\Helper\Manager\RelationManager;
 use Zend\Form\Form;
 
 class FormHandler
@@ -30,7 +28,11 @@ class FormHandler
     private function getDefaultTabManager()
     {
         $tabManager = array();
-        $firstTabFields = array_merge($this->modelHandler->getRelationFieldsNames(),$this->modelHandler->getModelManager()->getSimpleFields());
+        $firstTabFields = array_merge(
+            $this->modelHandler->getRelationFieldsNames(),
+            $this->modelHandler->getCustomSelectionFieldsNames(),
+            $this->modelHandler->getModelManager()->getSimpleFields()
+        );
         if (count($firstTabFields) > 0) {
             $tabManager['simple_fields'] = $firstTabFields;
         }
@@ -147,6 +149,7 @@ class FormHandler
             }
         }
         $form = $this->addRelationFieldsToForm($form);
+        $form = $this->addCustomSelectionFieldsToForm($form);
         return $form;
     }
 
@@ -192,7 +195,30 @@ class FormHandler
 
     protected function addCustomSelectionFieldsToForm(Form $form)
     {
+        foreach($this->modelHandler->getCustomSelectionHandlers() as $customSelectionHandler) {
+            if ($customSelectionHandler instanceof CustomSelectionHandler) {
 
+                $multiple     = '';
+
+                if ($customSelectionHandler->getCustomSelectionManager()->requiresTable()) {
+                    //If requiresTable = true show a multi-choice select box
+                    $multiple = 'multiple';
+                }
+
+                $form->add(array(
+                    'type'       => 'Zend\Form\Element\Select',
+                    'name'       => $customSelectionHandler->getCustomSelectionManager()->getFieldName(),
+                    'options'    => array(
+                        'label'         => $customSelectionHandler->getCustomSelectionManager()->getFieldName(),
+                        'value_options' => $customSelectionHandler->getCustomSelectionManager()->getOptionsForSelect(),
+                    ),
+                    'attributes' => array(
+                        'class'    => 'form-control',
+                        'multiple' => $multiple
+                    )
+                ));
+            }
+        }
         return $form;
     }
 

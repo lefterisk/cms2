@@ -22,6 +22,13 @@
                 <li class="<?php echo ($tabCounter == 0)? 'active' : ''; ?>"><a href="#tab_<?php echo $tabCounter; ?>" data-toggle="tab"><?php echo $this->translate($tab); ?></a></li>
                 <?php $tabCounter++ ?>
             <?php endforeach; ?>
+            <li class="pull-right tab-toolkit hidden-xs">
+                <div class="btn-group btn-group-xs">
+                    <button type="submit" class="btn btn-primary save_stay"><span class="glyphicon glyphicon-floppy-disk"></span></button>
+                    <button type="submit" class="btn btn-success save_exit"><span class="glyphicon glyphicon-floppy-open"></span></button>
+                    <a class="btn btn-warning" href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model)); ?>"><span class="glyphicon glyphicon-share-alt"></span></a>
+                </div>
+            </li>
         </ul>
         <div class="tab-content">
             <?php $tabCounter = 0; ?>
@@ -47,13 +54,12 @@
         </button>
 
         <button type="submit" class="btn btn-success save_exit">
-            <span class="glyphicon glyphicon glyphicon-floppy-open"></span>&nbsp;<?php echo $this->translate('Save & Exit'); ?>
+            <span class="glyphicon glyphicon-floppy-open"></span>&nbsp;<?php echo $this->translate('Save & Exit'); ?>
         </button>
 
         <a class="btn btn-warning" href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model)); ?>">
-            <span class="glyphicon glyphicon glyphicon-share-alt"></span>&nbsp;<?php echo $this->translate('Exit'); ?>
+            <span class="glyphicon glyphicon-share-alt"></span>&nbsp;<?php echo $this->translate('Exit'); ?>
         </a>
     </div>
-
     <?php echo $this->form()->closeTag($form); ?>
 </section>
