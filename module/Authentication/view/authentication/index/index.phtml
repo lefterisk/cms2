@@ -1,0 +1,37 @@
+<div class="form-box" id="login-box">
+    <div class="header">Sign In</div>
+    <?php $form->prepare() ?>
+    <?php echo $this->form()->openTag($form); ?>
+        <div class="body bg-gray">
+            <?php if (!empty($messages)) : ?>
+            <br/>
+            <div class="alert alert-danger alert-dismissable">
+                <i class="fa fa-ban"></i>
+                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                <ul>
+                    <?php foreach ($messages as $message) : ?>
+                        <li><b><?php echo $this->translate($message); ?></b></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+            <div class="form-group <?php echo ($this->formElementErrors($form->get('email')) != '') ? 'has-error' : ''; ?>">
+                <label><?php echo ($form->get('email')->getLabel() != '') ? $this->translate($form->get('email')->getLabel()) : ''; ?></label>
+                <div class="text-red"><?php echo  $this->formElementErrors($form->get('email'), array('class' => "input_error")) ?></div>
+                <?php echo $this->formElement($form->get('email')); ?>
+            </div>
+            <div class="form-group <?php echo ($this->formElementErrors($form->get('password')) != '') ? 'has-error' : ''; ?>">
+                <label><?php echo ($form->get('password')->getLabel() != '') ? $this->translate($form->get('password')->getLabel()) : ''; ?></label>
+                <div class="text-red"><?php echo  $this->formElementErrors($form->get('password'), array('class' => "input_error")) ?></div>
+                <?php echo $this->formElement($form->get('password')); ?>
+            </div>
+
+            <div class="form-group">
+                <?php echo $this->formElement($form->get('remember')); ?> Remember me
+            </div>
+        </div>
+        <div class="footer">
+            <button type="submit" class="btn bg-olive btn-block"><?php echo $this->translate('Sign in'); ?></button>
+        </div>
+    <?php echo $this->form()->closeTag($form); ?>
+</div>

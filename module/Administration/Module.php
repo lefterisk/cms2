@@ -10,9 +10,12 @@
 namespace Administration;
 
 use Administration\Helper\DbGateway\SiteLanguageHelper;
+use Zend\Db\TableGateway\TableGateway;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Session\Container;
+use Zend\Session\SaveHandler\DbTableGateway;
+use Zend\Session\SaveHandler\DbTableGatewayOptions;
 
 
 class Module
@@ -120,13 +123,19 @@ class Module
                     $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
                     return $dbAdapter;
                 },
-                'Session' => function ($sm) {
+                'Session' => function () {
                     return new Container();
                 },
                 'SiteLanguages' => function ($sm) {
                     $dbAdapter = $sm->get('DbAdapter');
                     return new SiteLanguageHelper($dbAdapter);
-                }
+                },
+                'SessionSaveHandler' => function ($sm) {
+                    $dbAdapter     = $sm->get('DbAdapter');
+                    $tableGateway  = new TableGateway('Session', $dbAdapter);
+                    $saveHandler   = new DbTableGateway($tableGateway, new DbTableGatewayOptions());
+                    return $saveHandler;
+                },
             ),
         );
     }

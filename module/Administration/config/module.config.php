@@ -29,7 +29,7 @@ return array(
                                 'action'        => '[a-zA-Z][a-zA-Z0-9_-]*'
                             ),
                             'defaults' => array(
-                                'controller' => 'Administration\Controller\Login',
+                                'controller' => 'Authentication\Controller\Index',
                                 'action' => 'index'
                             )
                         )
@@ -78,7 +78,6 @@ return array(
         'invokables' => array(
             'Administration\Controller\Index' => 'Administration\Controller\IndexController',
             'Administration\Controller\Model' => 'Administration\Controller\ModelController',
-            'Administration\Controller\Login' => 'Administration\Controller\LoginController',
         ),
     ),
     // Configuration so that we have different layouts for different modules - combined with Module.php onBootstrap
@@ -86,15 +85,22 @@ return array(
         'Administration' => array(
             'layout'              => 'layout/admin/layout',
             'template_path_stack' => __DIR__ . '/../view',
-            'not_found_template'       => 'error/admin/404',
-            'exception_template'       => 'error/admin/index',
-            'url_regexp'               => '|^/admin.*$|'
+            'not_found_template'  => 'error/admin/404',
+            'exception_template'  => 'error/admin/index',
+            'url_regexp'          => '|^/admin.*$|'
+        ),
+        'Authentication' => array(
+            'layout'              => 'layout/login/layout',
+            'template_path_stack' => __DIR__ . '/../../Authentication/view',
+            'not_found_template'  => 'error/admin/404',
+            'exception_template'  => 'error/admin/index',
+            'url_regexp'          => '|^/admin/login.*$|'
         ),
         'Application'    => array(
             'layout'              => 'layout/app/layout',
             'template_path_stack' => __DIR__ . '/../../Application/view',
-            'not_found_template'       => 'error/app/404',
-            'exception_template'       => 'error/app/index',
+            'not_found_template'  => 'error/app/404',
+            'exception_template'  => 'error/app/index',
         )
     ),
     'view_manager' => array(
@@ -106,6 +112,7 @@ return array(
         'template_map' => array(
             'layout/admin/layout'     => __DIR__ . '/../view/layout/layout.phtml',
             'layout/app/layout'       => __DIR__ . '/../../Application/view/layout/layout.phtml',
+            'layout/login/layout'     => __DIR__ . '/../../Authentication/view/layout/layout.phtml',
             'error/admin/404'         => __DIR__ . '/../view/error/404.phtml',
             'error/app/404'           => __DIR__ . '/../../Application/view/error/404.phtml',
             'error/admin/index'       => __DIR__ . '/../view/error/index.phtml',
