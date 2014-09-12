@@ -9,6 +9,7 @@
 
 namespace Administration;
 
+use Administration\Helper\DbGateway\AdminLanguageHelper;
 use Administration\Helper\DbGateway\SiteLanguageHelper;
 use Zend\Db\TableGateway\TableGateway;
 use Zend\Mvc\ModuleRouteListener;
@@ -25,14 +26,28 @@ class Module
         $eventManager        = $e->getApplication()->getEventManager();
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
+        $sessionContainer    = $e->getApplication()->getServiceManager()->get('Session');
+
+        //Setting up the locale
+        if (empty($sessionContainer->locale)) {
+            $adminLanguageHelper      = $e->getApplication()->getServiceManager()->get('AdminLanguages');
+            $sessionContainer->locale = $adminLanguageHelper->getDefaultAdminLocale();
+        }
+        $e->getApplication()->getServiceManager()->get('translator')->setLocale($sessionContainer->locale);
 
         //Switch between layouts/templates if route has been matched
-        $eventManager->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function($e) {
+        $eventManager->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function(MvcEvent $e) {
             $controller      = $e->getTarget();
             $controllerClass = get_class($controller);
             $moduleNamespace = substr($controllerClass, 0, strpos($controllerClass, '\\'));
             $serviceManager  = $e->getApplication()->getServiceManager();
             $config          = $serviceManager->get('config');
+
+            //if user not authenticated redirect to login
+            $authService = $serviceManager->get('AuthService');
+            if (!$authService->hasIdentity() && $moduleNamespace != 'Authentication') {
+                $controller->plugin('redirect')->toRoute('administration/login');
+            }
 
             //switching between Layouts based on current module, as per config module_template_map array
             if (isset($config['module_template_map'][$moduleNamespace]['layout'])) {
@@ -67,7 +82,18 @@ class Module
                     &&
                     preg_match($module_conf['url_regexp'], $path)
                 ) {
-                    $layout->setTemplate( $module_conf['layout'] );
+                    $authService = $serviceManager->get('AuthService');
+                    //if not logged in redirect to login
+                    if (!$authService->hasIdentity() && $module == 'Administration') {
+                        $url      = $e->getRouter()->assemble(array('action' => 'index'), array('name' => 'administration/login'));
+                        $response = $e->getResponse();
+                        $response->getHeaders()->addHeaderLine('Location', $url);
+                        $response->setStatusCode(302);
+                        $response->sendHeaders();
+                        exit;
+                    } else {
+                        $layout->setTemplate( $module_conf['layout'] );
+                    }
                     switch ($e->getResponse()->getStatusCode()) {
                         case '500':
                             if (array_key_exists('exception_template', $module_conf) && !empty($module_conf['exception_template'])) {
@@ -85,18 +111,6 @@ class Module
                 }
             }
         });
-
-        //Locale setup
-        $session      = $e->getApplication()->getServiceManager()->get('Session');
-//        if (!$session->locale || !$controlPanel->isValidAdminLocale($session->locale)) {
-//            $session->locale = $controlPanel->getDefaultAdminLocale();
-//        }
-//
-//        if ($e->getRouteMatch()->getParam('language') && $controlPanel->isValidAdminLocale($e->getRouteMatch()->getParam('language'))) {
-//            $session->locale = $e->getRouteMatch()->getParam('language');
-//        }
-//
-//        $e->getApplication()->getServiceManager()->get('translator')->setLocale($session->locale);
     }
 
     public function getConfig()
@@ -123,12 +137,13 @@ class Module
                     $dbAdapter = $sm->get('Zend\Db\Adapter\Adapter');
                     return $dbAdapter;
                 },
-                'Session' => function () {
-                    return new Container();
-                },
                 'SiteLanguages' => function ($sm) {
                     $dbAdapter = $sm->get('DbAdapter');
                     return new SiteLanguageHelper($dbAdapter);
+                },
+                'AdminLanguages' => function ($sm) {
+                    $dbAdapter = $sm->get('DbAdapter');
+                    return new AdminLanguageHelper($dbAdapter);
                 },
                 'SessionSaveHandler' => function ($sm) {
                     $dbAdapter     = $sm->get('DbAdapter');

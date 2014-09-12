@@ -13,6 +13,8 @@ use Authentication\Helper\Authentication\UserAuthAdapter;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Authentication\Helper\Authentication\SessionDBStorage;
+use Zend\ServiceManager\ServiceManager;
+use Zend\Session\Container;
 use Zend\Session\SessionManager;
 use Zend\Authentication\AuthenticationService;
 use Zend\Session\Config\SessionConfig;
@@ -46,16 +48,25 @@ class Module
     {
         return array(
             'factories' => array(
-                'AuthStorage' => function($sm) {
-                        $manager       = new SessionManager();
+                'Session' => function ($sm) {
+                        return new Container('Administration', $sm->get('SessionManager'));
+                    },
+                'SessionManager' => function(ServiceManager $sm) {
+                        $config        = $sm->get('config');
                         $sessionConfig = new SessionConfig();
+                        $sessionConfig->setOptions($config['session']);
+                        $manager       = new SessionManager($sessionConfig);
                         $saveHandler   = $sm->get('SessionSaveHandler');
-                        $saveHandler->open($sessionConfig->getOption('save_path'), 'user');
+                        $saveHandler->open($sessionConfig->getOption('save_path'), 'administration');
                         $manager->setSaveHandler($saveHandler);
-                        $authStorage   = new SessionDBStorage('user', null, $manager);
+                        return $manager;
+                    },
+                'AuthStorage' => function(ServiceManager $sm) {
+                        $manager     = $sm->get('SessionManager');
+                        $authStorage = new SessionDBStorage('Administration', null, $manager);
                         return $authStorage;
                     },
-                'AuthService' => function ($sm) {
+                'AuthService' => function (ServiceManager $sm) {
                         $dbAdapter           = $sm->get('DbAdapter');
                         $dbTableAuthAdapter  = new UserAuthAdapter($dbAdapter, 'user','email','password');
                         $storage             = $sm->get('AuthStorage');

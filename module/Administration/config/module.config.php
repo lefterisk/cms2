@@ -65,12 +65,12 @@ return array(
         ),
     ),
     'translator' => array(
-        'locale' => 'en_US',
+        'locale' => 'en',
         'translation_file_patterns' => array(
             array(
-                'type'     => 'gettext',
+                'type'     => 'phpArray',
                 'base_dir' => __DIR__ . '/../language',
-                'pattern'  => '%s.mo',
+                'pattern'  => '%s.php',
             ),
         ),
     ),
@@ -92,8 +92,8 @@ return array(
         'Authentication' => array(
             'layout'              => 'layout/login/layout',
             'template_path_stack' => __DIR__ . '/../../Authentication/view',
-            'not_found_template'  => 'error/admin/404',
-            'exception_template'  => 'error/admin/index',
+            'not_found_template'  => 'error/login/404',
+            'exception_template'  => 'error/login/index',
             'url_regexp'          => '|^/admin/login.*$|'
         ),
         'Application'    => array(
@@ -115,9 +115,11 @@ return array(
             'layout/login/layout'     => __DIR__ . '/../../Authentication/view/layout/layout.phtml',
             'error/admin/404'         => __DIR__ . '/../view/error/404.phtml',
             'error/app/404'           => __DIR__ . '/../../Application/view/error/404.phtml',
+            'error/login/404'         => __DIR__ . '/../../Authentication/view/error/404.phtml',
             'error/admin/index'       => __DIR__ . '/../view/error/index.phtml',
             'error/admin/model'       => __DIR__ . '/../view/administration/model/error.phtml',
             'error/app/index'         => __DIR__ . '/../../Application/view/error/index.phtml',
+            'error/login/index'       => __DIR__ . '/../../Authentication/view/error/index.phtml',
         ),
         'template_path_stack' => array(
             __DIR__ . '/../view',
@@ -133,4 +135,28 @@ return array(
             ),
         ),
     ),
+    'session' => array(
+        'remember_me_seconds' => 2419200,
+        'use_cookies' => true,
+        'cookie_httponly' => true,
+    ),
+//    'session' => array(
+//        'config' => array(
+//            'class' => 'Zend\Session\Config\SessionConfig',
+//            'options' => array(
+//                'name' => 'Admin',
+//            ),
+//        ),
+//        'remember_me_seconds' => 2419200,
+//        'use_cookies' => true,
+//        'cookie_httponly' => true,
+//        'save_handler' => 'SessionSaveHandler',
+//        'storage' => 'Zend\Session\Storage\SessionArrayStorage',
+//        'validators' => array(
+//            array(
+//                'Zend\Session\Validator\RemoteAddr',
+//                'Zend\Session\Validator\HttpUserAgent',
+//            ),
+//        ),
+//    ),
 );

@@ -30,10 +30,7 @@ class IndexController extends AbstractActionController
                 $authService->getAdapter()->setIdentity($this->params()->fromPost('email'));
                 $authService->getAdapter()->setCredential($this->params()->fromPost('password'));
                 $result = $authService->authenticate();
-                foreach($result->getMessages() as $message)
-                {
-                    $formMessages[] = $message;
-                }
+                $formMessages = $result->getMessages();
             }
         }
 
