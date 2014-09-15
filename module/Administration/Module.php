@@ -12,9 +12,9 @@ namespace Administration;
 use Administration\Helper\DbGateway\AdminLanguageHelper;
 use Administration\Helper\DbGateway\SiteLanguageHelper;
 use Zend\Db\TableGateway\TableGateway;
+use Zend\Escaper\Escaper;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
-use Zend\Session\Container;
 use Zend\Session\SaveHandler\DbTableGateway;
 use Zend\Session\SaveHandler\DbTableGatewayOptions;
 
@@ -27,6 +27,10 @@ class Module
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
         $sessionContainer    = $e->getApplication()->getServiceManager()->get('Session');
+        $serviceManager      = $e->getApplication()->getServiceManager();
+        $config              = $serviceManager->get('config');
+        $sharedEventManager  = $eventManager->getSharedManager();
+
 
         //Setting up the locale
         if (empty($sessionContainer->locale)) {
@@ -36,18 +40,25 @@ class Module
         $e->getApplication()->getServiceManager()->get('translator')->setLocale($sessionContainer->locale);
 
         //Switch between layouts/templates if route has been matched
-        $eventManager->getSharedManager()->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function(MvcEvent $e) {
+        $sharedEventManager->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function(MvcEvent $e) use ($serviceManager,$config, $sharedEventManager) {
             $controller      = $e->getTarget();
             $controllerClass = get_class($controller);
             $moduleNamespace = substr($controllerClass, 0, strpos($controllerClass, '\\'));
-            $serviceManager  = $e->getApplication()->getServiceManager();
-            $config          = $serviceManager->get('config');
+
 
             //if user not authenticated redirect to login
             $authService = $serviceManager->get('AuthService');
             if (!$authService->hasIdentity() && $moduleNamespace != 'Authentication') {
                 $controller->plugin('redirect')->toRoute('administration/login');
             }
+
+            //making identity available to layout
+            if ($authService->hasIdentity() && $moduleNamespace != 'Authentication') {
+                $controller->layout()->setVariable('identity', $authService->getIdentity());
+            }
+
+            //making the escaper available in all views
+            $controller->layout()->setVariable('escaper', new Escaper('utf-8'));
 
             //switching between Layouts based on current module, as per config module_template_map array
             if (isset($config['module_template_map'][$moduleNamespace]['layout'])) {
@@ -58,19 +69,36 @@ class Module
             if (isset($config['module_template_map'][$moduleNamespace]['template_path_stack'])) {
                 $templatePathResolver->setPaths(array($config['module_template_map'][$moduleNamespace]['template_path_stack']));
             }
+
+            //Add action listeners
+            $controller->getEventManager()->attach('logAdd', function($e) {
+                var_dump('add');
+            },101);
+
+            $controller->getEventManager()->attach('logEdit', function($e) {
+                var_dump('edit');
+            },102);
+
+            $controller->getEventManager()->attach('logDeleteSingle', function($e) {
+                var_dump('delete');
+            },103);
+
+            $controller->getEventManager()->attach('logDeleteMultiple', function($e) {
+                var_dump('deleteMultiple');
+            },104);
+
         }, 100);
 
         //Switch between layouts/templates if something went wrong (500,403,404)
-        $eventManager->attach( MvcEvent::EVENT_DISPATCH_ERROR, function( MvcEvent $e ){
+        $eventManager->attach( MvcEvent::EVENT_DISPATCH_ERROR, function( MvcEvent $e ) use ($serviceManager,$config, $eventManager){
 
-            $serviceManager  = $e->getApplication()->getServiceManager();
-            $config          = $serviceManager->get('config');
             $path            = $e->getRequest()->getUri()->getPath();
             $viewModel       = $e->getResult();
             $layout          = $serviceManager->get( 'viewManager' )->getViewModel();
 
             //Default error layout & template are set as per module_template_map array "Application"
             $layout->setTemplate($config['module_template_map']['Application']['layout'] );
+            $layout->setVariable('escaper', new Escaper('utf-8'));
             $viewModel->setVariables( array( ) )->setTemplate($config['module_template_map']['Application']['exception_template']);
 
             //Loop through modules (module_template_map array) to override template & layout
@@ -92,6 +120,9 @@ class Module
                         $response->sendHeaders();
                         exit;
                     } else {
+                        if ($authService->hasIdentity()) {
+                            $layout->setVariable('identity', $authService->getIdentity());
+                        }
                         $layout->setTemplate( $module_conf['layout'] );
                     }
                     switch ($e->getResponse()->getStatusCode()) {

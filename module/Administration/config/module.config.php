@@ -34,6 +34,16 @@ return array(
                             )
                         )
                     ),
+                    'logout' => array(
+                        'type' => 'literal',
+                        'options' => array(
+                            'route' => '/logout',
+                            'defaults' => array(
+                                'controller' => 'Authentication\Controller\Index',
+                                'action' => 'logout'
+                            )
+                        )
+                    ),
                     'model' => array(
                         'type' => 'segment',
                         'options' => array(

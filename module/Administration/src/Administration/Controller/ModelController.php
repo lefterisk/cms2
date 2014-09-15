@@ -12,13 +12,15 @@ namespace Administration\Controller;
 use Administration\Helper\FormHandler;
 use Administration\Helper\ListingHandler;
 use Administration\Helper\ModelHandler;
+use Zend\EventManager\EventManager;
+use Zend\EventManager\EventManagerAwareInterface;
 use Zend\Form\Form;
 use Zend\Json\Server\Request;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
 
-class ModelController extends AbstractActionController
+class ModelController extends AbstractActionController implements EventManagerAwareInterface
 {
     protected $errors = array();
 
@@ -73,6 +75,7 @@ class ModelController extends AbstractActionController
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
                 $model->save($form->getData());
+                $this->getEventManager()->trigger('logAdd');
                 return $this->redirectToModelAction($requested_model, 'index');
             }
         }
@@ -109,6 +112,7 @@ class ModelController extends AbstractActionController
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
                 $model->save($form->getData());
+                $this->getEventManager()->trigger('logEdit');
                 $redirect = $this->params()->fromPost('redirect_after_save');
                 if (!empty($redirect) && $redirect == 1) {
                     return $this->redirectToModelAction($requested_model, 'index');
@@ -154,6 +158,7 @@ class ModelController extends AbstractActionController
 
         try {
             $model->deleteItemById($requested_item);
+            $this->getEventManager()->trigger('logDeleteSingle');
             return $this->redirectToModelAction($requested_model, 'index');
         }
         catch (\Exception $ex) {
@@ -183,6 +188,7 @@ class ModelController extends AbstractActionController
 
         try {
             $model->deleteMultipleItemsById($itemsToDelete);
+            $this->getEventManager()->trigger('logDeleteMultiple');
             return $this->redirectToModelAction($requested_model, 'index');
         }
         catch (\Exception $ex) {
@@ -201,5 +207,13 @@ class ModelController extends AbstractActionController
             'action' => $action,
             'model'  => $model
         ));
+    }
+
+    public function getEventManager()
+    {
+        if (null === $this->events) {
+            $this->setEventManager(new EventManager());
+        }
+        return $this->events;
     }
 }

@@ -44,6 +44,17 @@ class IndexController extends AbstractActionController
         ));
     }
 
+    public function logoutAction()
+    {
+        $authService  = $this->getServiceLocator()->get('AuthService');
+
+        if ($authService->hasIdentity()) {
+            $authService->getStorage()->clear();
+        }
+
+        return $this->redirect()->toRoute('administration/login');
+    }
+
     protected function getInputFilter()
     {
         $inputFilter = new InputFilter();

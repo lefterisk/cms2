@@ -23,7 +23,7 @@ return array(
         "multilingual_files"      => array(),
     ),
     "max_tree_depth"  => 0,
-    "listing_fields"  => array(),
+    "listing_fields"  => array('name','code','status','is_primary'),
     "form_manager"    => array(
 
     ),
@@ -37,5 +37,5 @@ return array(
             "required" => true
         )
     ),
-    "action_manager" => ""
+    "action_manager" => array()
 );

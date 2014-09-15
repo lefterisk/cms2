@@ -36,7 +36,7 @@ class UserAuthAdapter extends AbstractAdapter implements AdapterInterface
      */
     protected function authenticateCreateSelect()
     {
-        return $this->getDbSelect()->from($this->tableName)->where(array($this->identityColumn => $this->getIdentity(), 'status' => '1'));
+        return $this->getDbSelect()->from($this->tableName)->join('user_group', 'user_group.id = ' . $this->tableName . '.user_group_id', array('user_group_name'=>'name'))->where(array($this->identityColumn => $this->getIdentity(), $this->tableName . '.status' => '1', 'user_group.status' => '1'));
     }
 
     private function verifyPassword($suppliedPassword, $storedPassword)
