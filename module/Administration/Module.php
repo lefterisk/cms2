@@ -13,6 +13,8 @@ use Administration\Helper\DbGateway\AdminLanguageHelper;
 use Administration\Helper\DbGateway\SiteLanguageHelper;
 use Zend\Db\TableGateway\TableGateway;
 use Zend\Escaper\Escaper;
+use Zend\Log\Logger;
+use Zend\Log\Writer\Db;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\MvcEvent;
 use Zend\Session\SaveHandler\DbTableGateway;
@@ -30,7 +32,6 @@ class Module
         $serviceManager      = $e->getApplication()->getServiceManager();
         $config              = $serviceManager->get('config');
         $sharedEventManager  = $eventManager->getSharedManager();
-
 
         //Setting up the locale
         if (empty($sessionContainer->locale)) {
@@ -71,22 +72,11 @@ class Module
             }
 
             //Add action listeners
-            $controller->getEventManager()->attach('logAdd', function($e) {
-                var_dump('add');
+            $controller->getEventManager()->attach('logAction', function($e) use ($serviceManager){
+                $logger = $serviceManager->get('LogHelper');
+                $logger->info('Informational message');
+                var_dump($e->getParams());
             },101);
-
-            $controller->getEventManager()->attach('logEdit', function($e) {
-                var_dump('edit');
-            },102);
-
-            $controller->getEventManager()->attach('logDeleteSingle', function($e) {
-                var_dump('delete');
-            },103);
-
-            $controller->getEventManager()->attach('logDeleteMultiple', function($e) {
-                var_dump('deleteMultiple');
-            },104);
-
         }, 100);
 
         //Switch between layouts/templates if something went wrong (500,403,404)
@@ -182,6 +172,19 @@ class Module
                     $saveHandler   = new DbTableGateway($tableGateway, new DbTableGatewayOptions());
                     return $saveHandler;
                 },
+                'LogHelper' => function ($sm) {
+                    $dbAdapter = $sm->get('DbAdapter');
+                    $mapping = array(
+                        'timestamp'    => 'date',
+                        'priority'     => 'type',
+                        'priorityName' => 'priority_name',
+                        'message'      => 'event'
+                    );
+                    $writer = new Db($dbAdapter, 'log', $mapping);
+                    $logger = new Logger();
+                    $logger->addWriter($writer);
+                    return $logger;
+                }
             ),
         );
     }
