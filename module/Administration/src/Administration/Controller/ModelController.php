@@ -75,7 +75,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
                 $model->save($form->getData());
-                $this->getEventManager()->trigger('logAction', null, array('action' => 'add' , 'model' => $requested_model));
+                $this->getEventManager()->trigger('logAction', null, array('type' => 'info', 'message' => 'Added item of type "' . ucfirst($requested_model) . '"'));
                 return $this->redirectToModelAction($requested_model, 'index');
             }
         }
@@ -112,7 +112,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
             $form->setData($formManager->preparePostData($request->getPost()));
             if ($form->isValid()) {
                 $model->save($form->getData());
-                $this->getEventManager()->trigger('logAction', null, array('action' => 'edit' , 'model' => $requested_model, 'id' => $requested_item));
+                $this->getEventManager()->trigger('logAction',null,array('type' => 'info','message' => 'Edited item of type "' . ucfirst($requested_model) . '" with id ="' . $requested_item . '"'));
                 $redirect = $this->params()->fromPost('redirect_after_save');
                 if (!empty($redirect) && $redirect == 1) {
                     return $this->redirectToModelAction($requested_model, 'index');
@@ -158,7 +158,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
 
         try {
             $model->deleteItemById($requested_item);
-            $this->getEventManager()->trigger('logAction', null, array('action' => 'delete single' , 'model' => $requested_model, 'id' => $requested_item));
+            $this->getEventManager()->trigger('logAction',null,array('type' => 'warn','message' => 'Deleted item of type "' . ucfirst($requested_model) . '" with id ="' . $requested_item . '"'));
             return $this->redirectToModelAction($requested_model, 'index');
         }
         catch (\Exception $ex) {
@@ -188,7 +188,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
 
         try {
             $model->deleteMultipleItemsById($itemsToDelete);
-            $this->getEventManager()->trigger('logAction', null, array('action' => 'delete multiple' , 'model' => $requested_model, 'ids' => implode(",",$itemsToDelete)));
+            $this->getEventManager()->trigger('logAction',null,array('type' => 'warn','message' => 'Deleted items of type "' . ucfirst($requested_model) . '" with ids ="' . implode(",",$itemsToDelete) . '"'));
             return $this->redirectToModelAction($requested_model, 'index');
         }
         catch (\Exception $ex) {

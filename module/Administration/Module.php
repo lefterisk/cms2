@@ -50,7 +50,7 @@ class Module
             //if user not authenticated redirect to login
             $authService = $serviceManager->get('AuthService');
             if (!$authService->hasIdentity() && $moduleNamespace != 'Authentication') {
-                $controller->plugin('redirect')->toRoute('administration/login');
+                return $controller->plugin('redirect')->toRoute('administration/login');
             }
 
             //making identity available to layout
@@ -72,19 +72,31 @@ class Module
             }
 
             //Add action listeners
-            $controller->getEventManager()->attach('logAction', function($e) use ($serviceManager){
-                $logger = $serviceManager->get('LogHelper');
-                $logger->info('Informational message');
-                var_dump($e->getParams());
-            },101);
+            //Logging
+            $controller->getEventManager()->attach('logAction', function($e) use ($serviceManager,$authService){
+                $params   = $e->getParams();
+                $logger   = $serviceManager->get('LogHelper');
+                $userData = array();
+
+                if ($authService->hasIdentity()) {
+                    $user     = $authService->getIdentity();
+                    $userData = array('user_id' => $user['id']);
+                }
+
+                if (array_key_exists('type', $params) && method_exists($logger,$params['type'])) {
+                    $logger->{$params['type']}($params['message'], $userData);
+                } else {
+                    $logger->info($params['message'], $userData);
+                }
+            }, 101);
         }, 100);
 
         //Switch between layouts/templates if something went wrong (500,403,404)
         $eventManager->attach( MvcEvent::EVENT_DISPATCH_ERROR, function( MvcEvent $e ) use ($serviceManager,$config, $eventManager){
 
-            $path            = $e->getRequest()->getUri()->getPath();
-            $viewModel       = $e->getResult();
-            $layout          = $serviceManager->get( 'viewManager' )->getViewModel();
+            $path      = $e->getRequest()->getUri()->getPath();
+            $viewModel = $e->getResult();
+            $layout    = $serviceManager->get( 'viewManager' )->getViewModel();
 
             //Default error layout & template are set as per module_template_map array "Application"
             $layout->setTemplate($config['module_template_map']['Application']['layout'] );
@@ -174,11 +186,13 @@ class Module
                 },
                 'LogHelper' => function ($sm) {
                     $dbAdapter = $sm->get('DbAdapter');
-                    $mapping = array(
-                        'timestamp'    => 'date',
-                        'priority'     => 'type',
+                    $mapping   = array(
+                        'timestamp'    => 'timestamp',
                         'priorityName' => 'priority_name',
-                        'message'      => 'event'
+                        'message'      => 'message',
+                        'extra'        => array(
+                            'user_id'      => 'user_id',
+                        )
                     );
                     $writer = new Db($dbAdapter, 'log', $mapping);
                     $logger = new Logger();
