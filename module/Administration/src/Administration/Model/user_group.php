@@ -2,6 +2,12 @@
 /**
  *Configuration array for UserGroup model
  */
+
+$optionsArray = array();
+foreach ($this->modelHelper->getAvailableModels() as $model => $fullName) {
+    $optionsArray[$model] = ucfirst(str_replace('_', ' ', $model));
+}
+
 return array(
     "model"         => "user_group",
     "prefix"        => "user_group_",
@@ -16,11 +22,30 @@ return array(
         "integers"                => array(),
         "files"                   => array(),
         "custom_selections"       => array(
-//            "field_name" => array(
-//                "options"           => array("key" => "value"),
-//                "multiple"          => false,
-//                "lookup_table_name" => ""
-//            )
+            array(
+                "name"              => "view_models",
+                "options"           => $optionsArray,
+                "multiple"          => true,
+                "lookup_table_name" => "user_group_to_view_models"
+            ),
+            array(
+                "name"              => "add_models",
+                "options"           => $optionsArray,
+                "multiple"          => true,
+                "lookup_table_name" => "user_group_to_add_models"
+            ),
+            array(
+                "name"              => "edit_models",
+                "options"           => $optionsArray,
+                "multiple"          => true,
+                "lookup_table_name" => "user_group_to_edit_models"
+            ),
+            array(
+                "name"              => "delete_models",
+                "options"           => $optionsArray,
+                "multiple"          => true,
+                "lookup_table_name" => "user_group_to_delete_models"
+            )
         ),
         "relations" => array(
 

@@ -16,11 +16,7 @@ return array(
         "integers"                => array(),
         "files"                   => array(),
         "custom_selections"       => array(
-//            "field_name" => array(
-//                "options"           => array("key" => "value"),
-//                "multiple"          => false,
-//                "lookup_table_name" => ""
-//            )
+
         ),
         "relations" => array(
             "field_name" => array(

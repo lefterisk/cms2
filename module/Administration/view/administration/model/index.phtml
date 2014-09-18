@@ -37,28 +37,35 @@
                     <?php endforeach; ?>
                         <td class="text-center">
                             <div class="btn-group">
+                                <?php if ($permissionHelper->isAllowed($userGroup, null, 'edit')) : ?>
                                 <a href="<?php echo $this->url('administration/model', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-info">
                                     <span class="glyphicon  glyphicon-pencil"></span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($permissionHelper->isAllowed($userGroup, null, 'delete')) : ?>
                                 <a href="<?php echo $this->url('administration/model', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-warning">
                                     <span class="glyphicon  glyphicon-trash"></span>
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>
-
             <div class="btn-group">
+                <?php if ($permissionHelper->isAllowed($userGroup, null, 'add')) : ?>
                 <a href="<?php echo $this->url('administration/model', array('action' => 'add', 'model' => $model)); ?>" class="btn btn-primary">
                     <span class="glyphicon glyphicon-plus-sign"></span>
                     <?php echo $this->translate('Add New'); ?>
                 </a>
+                <?php endif; ?>
+                <?php if ($permissionHelper->isAllowed($userGroup, null, 'delete')) : ?>
                 <button type="submit" class="btn btn-warning">
                     <span class="glyphicon glyphicon-trash"></span>
                     <?php echo $this->translate('Delete Selected'); ?>
                 </button>
+                <?php endif; ?>
             </div>
             <?php echo $this->form()->closeTag(); ?>
         </div><!-- /.box-body -->

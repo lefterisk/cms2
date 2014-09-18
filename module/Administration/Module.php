@@ -10,6 +10,7 @@
 namespace Administration;
 
 use Administration\Helper\DbGateway\AdminLanguageHelper;
+use Administration\Helper\DbGateway\PermissionHelper;
 use Administration\Helper\DbGateway\SiteLanguageHelper;
 use Zend\Db\TableGateway\TableGateway;
 use Zend\Escaper\Escaper;
@@ -41,21 +42,28 @@ class Module
         $e->getApplication()->getServiceManager()->get('translator')->setLocale($sessionContainer->locale);
 
         //Switch between layouts/templates if route has been matched
-        $sharedEventManager->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function(MvcEvent $e) use ($serviceManager,$config, $sharedEventManager) {
+        $sharedEventManager->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function(MvcEvent $e) use ($serviceManager, $config, $sharedEventManager) {
             $controller      = $e->getTarget();
             $controllerClass = get_class($controller);
             $moduleNamespace = substr($controllerClass, 0, strpos($controllerClass, '\\'));
 
-
             //if user not authenticated redirect to login
             $authService = $serviceManager->get('AuthService');
+            //pass identity to controller
+            $controller->identity = $authService->getIdentity();
             if (!$authService->hasIdentity() && $moduleNamespace != 'Authentication') {
                 return $controller->plugin('redirect')->toRoute('administration/login');
             }
 
+            //ACL setup for Group & model
+            $permissionHelper = $serviceManager->get('PermissionHelper');
+            //passing the Acl to the controller
+            $controller->acl  = $permissionHelper->getAclForGroupAndModel($controller->identity['user_group_id'],$controller->identity['user_group_name'],$e->getRouteMatch()->getParam('model'));
+
+
             //making identity available to layout
             if ($authService->hasIdentity() && $moduleNamespace != 'Authentication') {
-                $controller->layout()->setVariable('identity', $authService->getIdentity());
+                $controller->layout()->setVariable('identity', $controller->identity);
             }
 
             //making the escaper available in all views
@@ -198,6 +206,10 @@ class Module
                     $logger = new Logger();
                     $logger->addWriter($writer);
                     return $logger;
+                },
+                'PermissionHelper' => function ($sm) {
+                    $dbAdapter = $sm->get('DbAdapter');
+                    return new PermissionHelper($dbAdapter);
                 }
             ),
         );

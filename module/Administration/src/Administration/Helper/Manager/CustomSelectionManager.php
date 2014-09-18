@@ -52,9 +52,16 @@ class CustomSelectionManager extends AbstractManager
 
     public function getTableColumnsDefinition()
     {
+        $columnType = 'integer';
+        foreach ($this->getOptionsForSelect() as $key => $value) {
+            if (!is_int($key)) {
+                $columnType = 'varchar';
+            }
+        }
+
         return array(
             $this->model_prefix . 'id' => 'integer',
-            $this->getColumn() => 'integer'
+            $this->getColumn()         => $columnType
         );
     }
 

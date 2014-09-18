@@ -37,11 +37,11 @@ class ModelHandler
     public function __construct($model, AdapterInterface $dbAdapter)
     {
         $this->modelHelper    = new ModelHelper();
+        $this->adapter        = $dbAdapter;
         $modelDefinitionArray = $this->modelChecks($model, 'main');
         if (!$modelDefinitionArray) {
             return;
         }
-        $this->adapter       = $dbAdapter;
         $this->modelManager  = new ModelManager($modelDefinitionArray);
         $this->actionManagerHandler = new ActionManagerHandler($this->getModelManager()->getActionManagers());
 

@@ -26,12 +26,17 @@ class ModelController extends AbstractActionController implements EventManagerAw
 
     public function indexAction()
     {
-        $requested_model = $this->params()->fromRoute('model');
-        $model           = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        $requested_model  = $this->params()->fromRoute('model');
 
+        //identity & acl comes from module.php (bootstrap)
+        if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'view')) {
+            return $this->notPermittedViewmodel($requested_model);
+        }
+
+        $model            = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
+            $viewModel    = new ViewModel(array(
                 'modelName' =>  $requested_model,
                 'errors'    => $this->errors
             ));
@@ -47,13 +52,21 @@ class ModelController extends AbstractActionController implements EventManagerAw
             'multipleDeleteForm' => $multipleDeleteForm,
             'model'              => $requested_model,
             'listing'            => $listingHandler->getListing(),
-            'listingFields'      => $listingHandler->getListingFieldsDefinitions()
+            'listingFields'      => $listingHandler->getListingFieldsDefinitions(),
+            'userGroup'          => $this->identity['user_group_name'],
+            'permissionHelper'   => $this->acl
         ));
     }
 
     public function addAction()
     {
         $requested_model = $this->params()->fromRoute('model');
+
+        //identity & acl comes from module.php (bootstrap)
+        if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'add')) {
+            return $this->notPermittedViewmodel($requested_model);
+        }
+
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
@@ -91,6 +104,12 @@ class ModelController extends AbstractActionController implements EventManagerAw
     public function editAction()
     {
         $requested_model = $this->params()->fromRoute('model');
+
+        //identity & acl comes from module.php (bootstrap)
+        if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'edit')) {
+            return $this->notPermittedViewmodel($requested_model);
+        }
+
         $requested_item  = $this->params()->fromRoute('item');
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
@@ -144,6 +163,12 @@ class ModelController extends AbstractActionController implements EventManagerAw
     public function deleteAction()
     {
         $requested_model = $this->params()->fromRoute('model');
+
+        //identity & acl comes from module.php (bootstrap)
+        if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'delete')) {
+            return $this->notPermittedViewmodel($requested_model);
+        }
+
         $requested_item  = $this->params()->fromRoute('item');
 
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
@@ -174,6 +199,12 @@ class ModelController extends AbstractActionController implements EventManagerAw
     public function deleteMultipleAction()
     {
         $requested_model = $this->params()->fromRoute('model');
+
+        //identity & acl comes from module.php (bootstrap)
+        if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'delete')) {
+            return $this->notPermittedViewmodel($requested_model);
+        }
+
         $itemsToDelete   = $this->getRequest()->getPost('multipleDeleteCheck');
 
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
@@ -199,6 +230,15 @@ class ModelController extends AbstractActionController implements EventManagerAw
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
+    }
+
+    public function notPermittedViewmodel($requested_model)
+    {
+        $viewModel = new ViewModel(array(
+            'modelName' => $requested_model,
+            'errors'    => array('You are are not authorised for this action')
+        ));
+        return $viewModel->setTemplate('error/admin/model');
     }
 
     protected function redirectToModelAction($model, $action)
