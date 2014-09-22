@@ -90,6 +90,8 @@ return array(
             'Administration\Controller\Model' => 'Administration\Controller\ModelController',
         ),
     ),
+    // If set, the system auto-installs specific required models as per InstallerHelper
+    'auto_install' => true,
     // Configuration so that we have different layouts for different modules - combined with Module.php onBootstrap
     'module_template_map' => array(
         'Administration' => array(

@@ -12,6 +12,7 @@ namespace Administration;
 use Administration\Helper\DbGateway\AdminLanguageHelper;
 use Administration\Helper\DbGateway\PermissionHelper;
 use Administration\Helper\DbGateway\SiteLanguageHelper;
+use Administration\Helper\InstallerHandler;
 use Zend\Db\TableGateway\TableGateway;
 use Zend\Escaper\Escaper;
 use Zend\Log\Logger;
@@ -29,10 +30,20 @@ class Module
         $eventManager        = $e->getApplication()->getEventManager();
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);
-        $sessionContainer    = $e->getApplication()->getServiceManager()->get('Session');
         $serviceManager      = $e->getApplication()->getServiceManager();
         $config              = $serviceManager->get('config');
         $sharedEventManager  = $eventManager->getSharedManager();
+
+        //Install if auto-install config setting is set to true
+        if (array_key_exists('auto_install', $config) && $config['auto_install']) {
+            $installer = $e->getApplication()->getServiceManager()->get('InstallerHandler');
+            if (count($installer->getErrors()) > 0) {
+                var_dump($installer->getErrors());
+                die();
+            }
+        }
+
+        $sessionContainer    = $e->getApplication()->getServiceManager()->get('Session');
 
         //Setting up the locale
         if (empty($sessionContainer->locale)) {
@@ -210,6 +221,10 @@ class Module
                 'PermissionHelper' => function ($sm) {
                     $dbAdapter = $sm->get('DbAdapter');
                     return new PermissionHelper($dbAdapter);
+                },
+                'InstallerHandler' => function ($sm) {
+                    $dbAdapter = $sm->get('DbAdapter');
+                    return new InstallerHandler($dbAdapter);
                 }
             ),
         );
