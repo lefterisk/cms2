@@ -3,6 +3,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
+        <meta name="robots" content="noindex">
         <?php echo $this->headTitle('ZF2 '. $this->translate('Skeleton Application'))->setSeparator(' - ')->setAutoEscape(false) ?>
 
         <?php echo $this->headMeta()
@@ -87,7 +88,7 @@
                             </a>
                         </li>
                         <?php foreach ($toolBoxes as $toolBox) :?>
-                        <li class="treeview">
+                        <li class="treeview"><!-- active-->
                             <a href="#">
                                 <i class="fa fa-folder"></i> <span><?php echo $this->translate($escaper->escapeHtml($toolBox['name']));?></span>
                                 <i class="fa fa-angle-left pull-right"></i>
