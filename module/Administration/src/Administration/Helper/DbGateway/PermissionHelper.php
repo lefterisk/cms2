@@ -2,6 +2,7 @@
 namespace Administration\Helper\DbGateway;
 
 
+use Administration\Helper\ModelHandler;
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\Sql\Sql;
 use Zend\Db\TableGateway\Exception;
@@ -37,7 +38,6 @@ class PermissionHelper
         return $this->acl;
     }
 
-
     protected function isGroupPermittedActionForModel($groupId, $action, $model)
     {
         if (in_array($action, $this->permittedActionsArray)) {
@@ -49,5 +49,24 @@ class PermissionHelper
             }
         }
         return false;
+    }
+
+    public function getPermittedToolBoxes($groupId)
+    {
+        $statement    = $this->sql->select('tool_box_to_user_group')->where(array('user_group_id' => $groupId));
+        $selectString = $this->sql->getSqlStringForSqlObject($statement);
+        $results      = $this->dbAdapter->query($selectString, Adapter::QUERY_MODE_EXECUTE);
+        $permittedToolBoxes = array();
+        if (count($results) > 0) {
+            $model = new ModelHandler('tool_box', $this->dbAdapter);
+            foreach ($results as $tool_box_id) {
+                try {
+                    $permittedToolBoxes[] = $model->getItemById($tool_box_id['tool_box_id']);
+                } catch (\Exception $ex) {
+                    //@todo Handle this scenario
+                }
+            }
+        }
+        return $permittedToolBoxes;
     }
 }

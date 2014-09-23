@@ -42,7 +42,6 @@ class Module
                 die();
             }
         }
-
         $sessionContainer    = $e->getApplication()->getServiceManager()->get('Session');
 
         //Setting up the locale
@@ -50,6 +49,7 @@ class Module
             $adminLanguageHelper      = $e->getApplication()->getServiceManager()->get('AdminLanguages');
             $sessionContainer->locale = $adminLanguageHelper->getDefaultAdminLocale();
         }
+
         $e->getApplication()->getServiceManager()->get('translator')->setLocale($sessionContainer->locale);
 
         //Switch between layouts/templates if route has been matched
@@ -58,23 +58,44 @@ class Module
             $controllerClass = get_class($controller);
             $moduleNamespace = substr($controllerClass, 0, strpos($controllerClass, '\\'));
 
-            //if user not authenticated redirect to login
-            $authService = $serviceManager->get('AuthService');
-            //pass identity to controller
-            $controller->identity = $authService->getIdentity();
-            if (!$authService->hasIdentity() && $moduleNamespace != 'Authentication') {
-                return $controller->plugin('redirect')->toRoute('administration/login');
-            }
+            //Actions only for the admin system
+            if (in_array($moduleNamespace, array('Administration','Authentication'))) {
+                //if user not authenticated redirect to login
+                $authService = $serviceManager->get('AuthService');
+                //pass identity to controller
+                $controller->identity = $authService->getIdentity();
+                if (!$authService->hasIdentity() && $moduleNamespace != 'Authentication') {
+                    return $controller->plugin('redirect')->toRoute('administration/login');
+                }
 
-            //ACL setup for Group & model
-            $permissionHelper = $serviceManager->get('PermissionHelper');
-            //passing the Acl to the controller
-            $controller->acl  = $permissionHelper->getAclForGroupAndModel($controller->identity['user_group_id'],$controller->identity['user_group_name'],$e->getRouteMatch()->getParam('model'));
+                //ACL setup for Group & model
+                $permissionHelper = $serviceManager->get('PermissionHelper');
+                //passing the Acl to the controller
+                $controller->acl  = $permissionHelper->getAclForGroupAndModel($controller->identity['user_group_id'],$controller->identity['user_group_name'],$e->getRouteMatch()->getParam('model'));
+                //making identity available to layout
+                if ($authService->hasIdentity() && $moduleNamespace != 'Authentication') {
+                    $controller->layout()->setVariable('identity', $controller->identity);
+                    $controller->layout()->setVariable('toolBoxes', $permissionHelper->getPermittedToolBoxes($controller->identity['user_group_id']));
+                }
 
+                //Add action listeners
+                //Logging
+                $controller->getEventManager()->attach('logAction', function($e) use ($serviceManager,$authService){
+                    $params   = $e->getParams();
+                    $logger   = $serviceManager->get('LogHelper');
+                    $userData = array();
 
-            //making identity available to layout
-            if ($authService->hasIdentity() && $moduleNamespace != 'Authentication') {
-                $controller->layout()->setVariable('identity', $controller->identity);
+                    if ($authService->hasIdentity()) {
+                        $user     = $authService->getIdentity();
+                        $userData = array('user_id' => $user['id']);
+                    }
+
+                    if (array_key_exists('type', $params) && method_exists($logger,$params['type'])) {
+                        $logger->{$params['type']}($params['message'], $userData);
+                    } else {
+                        $logger->info($params['message'], $userData);
+                    }
+                }, 101);
             }
 
             //making the escaper available in all views
@@ -89,25 +110,6 @@ class Module
             if (isset($config['module_template_map'][$moduleNamespace]['template_path_stack'])) {
                 $templatePathResolver->setPaths(array($config['module_template_map'][$moduleNamespace]['template_path_stack']));
             }
-
-            //Add action listeners
-            //Logging
-            $controller->getEventManager()->attach('logAction', function($e) use ($serviceManager,$authService){
-                $params   = $e->getParams();
-                $logger   = $serviceManager->get('LogHelper');
-                $userData = array();
-
-                if ($authService->hasIdentity()) {
-                    $user     = $authService->getIdentity();
-                    $userData = array('user_id' => $user['id']);
-                }
-
-                if (array_key_exists('type', $params) && method_exists($logger,$params['type'])) {
-                    $logger->{$params['type']}($params['message'], $userData);
-                } else {
-                    $logger->info($params['message'], $userData);
-                }
-            }, 101);
         }, 100);
 
         //Switch between layouts/templates if something went wrong (500,403,404)
@@ -115,7 +117,7 @@ class Module
 
             $path      = $e->getRequest()->getUri()->getPath();
             $viewModel = $e->getResult();
-            $layout    = $serviceManager->get( 'viewManager' )->getViewModel();
+            $layout    = $serviceManager->get('viewManager')->getViewModel();
 
             //Default error layout & template are set as per module_template_map array "Application"
             $layout->setTemplate($config['module_template_map']['Application']['layout'] );

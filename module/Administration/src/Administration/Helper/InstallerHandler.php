@@ -30,19 +30,67 @@ class InstallerHandler
             array(
                 'name' => 'Administrator',
                 'status' => '1',
+                'view_models' => array(
+                    'admin_language',
+                    'example',
+                    'site_language',
+                    'tool_box',
+                    'user',
+                    'user_group'
+                ),
+                'add_models' => array(
+                    'admin_language',
+                    'example',
+                    'site_language',
+                    'tool_box',
+                    'user',
+                    'user_group'
+                ),
+                'edit_models' => array(
+                    'admin_language',
+                    'example',
+                    'site_language',
+                    'tool_box',
+                    'user',
+                    'user_group'
+                ),
+                'delete_models' => array(
+                    'admin_language',
+                    'example',
+                    'site_language',
+                    'tool_box',
+                    'user',
+                    'user_group'
+                ),
             )
         ),
         'user' => array(
             array(
-                'email' => 'lefteris.kokkonas@gmail.com',
-                'password' => '$2y$10$CUsvQRhj/ZhejADNzlRbAeX2s9daMpVA9CPYbvRdZrs8cEc/bOdkG',
-                'name' => 'Lefteris',
-                'surname' => 'Kokkonas',
+                'email' => 'administrator@gmail.com',
+                'password' => 'password',
+                'name' => 'Admin',
+                'surname' => 'Administrator',
                 'status' => '1',
                 'user_group_id' => '1',
                 'modified' => '2014-09-18 11:21:07',
             )
         ),
+        'tool_box' => array(
+            array(
+                'name' => 'Admin Tools',
+                'status' => '1',
+                'models' => array(
+                    'admin_language',
+                    'site_language',
+                    'tool_box',
+                    'user',
+                    'user_group'
+                ),
+                'user_group_id' => array(
+                    '1'
+                )
+            )
+        )
     );
     protected $nonModelRequiredTableDefinitions = array(
         'log' => 'CREATE TABLE `log` (`timestamp` varchar(30) DEFAULT NULL, `message` varchar(255) DEFAULT NULL, `priority_name` varchar(10) DEFAULT NULL, `user_id` int(11) DEFAULT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8;',

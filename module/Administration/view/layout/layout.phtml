@@ -1,4 +1,5 @@
 <?php echo $this->doctype(); ?>
+
 <html lang="en">
     <head>
         <meta charset="utf-8">
@@ -29,8 +30,9 @@
             ->prependFile($this->basePath() . '/js/respond.min.js', 'text/javascript', array('conditional' => 'lt IE 9',))
             ->prependFile($this->basePath() . '/js/html5shiv.js',   'text/javascript', array('conditional' => 'lt IE 9',))
         ; ?>
-
+        <?php $uri = $this->getHelperPluginManager()->getServiceLocator()->get('request')->getUri()->getPath(); ?>
     </head>
+
     <body class="skin-blue">
         <!-- header logo: style can be found in header.less -->
         <header class="header">
@@ -57,8 +59,8 @@
                                 <li class="user-header bg-light-blue">
                                     <img src="../../img/avatar3.png" class="img-circle" alt="User Image" />
                                     <p>
-                                        <?php echo $escaper->escapeHtml($identity['name'] . ' ' . $identity['surname']); ?> - <?php echo $escaper->escapeHtml($identity['user_group_name']); ?>
-                                        <small><?php echo $this->translate('Last Updated on: ');?><?php echo $identity['modified']; ?></small>
+                                        <?php echo $escaper->escapeHtml($identity['name'] . ' ' . $identity['surname']); ?>
+                                        <small><?php echo $escaper->escapeHtml($identity['user_group_name']); ?></small>
                                     </p>
                                 </li>
                                 <li class="user-footer">
@@ -80,25 +82,27 @@
                     <!-- sidebar menu: : style can be found in sidebar.less -->
                     <ul class="sidebar-menu">
                         <li>
-                            <a href="../../index.html">
-                                <i class="fa fa-dashboard"></i> <span>Dashboard</span>
+                            <a href="<?php echo $this->url('administration'); ?>">
+                                <i class="fa fa-dashboard"></i> <span><?php echo $this->translate('Dashboard');?></span>
                             </a>
                         </li>
-                        <li class="treeview active">
+                        <?php foreach ($toolBoxes as $toolBox) :?>
+                        <li class="treeview">
                             <a href="#">
-                                <i class="fa fa-folder"></i> <span>Examples</span>
+                                <i class="fa fa-folder"></i> <span><?php echo $this->translate($escaper->escapeHtml($toolBox['name']));?></span>
                                 <i class="fa fa-angle-left pull-right"></i>
                             </a>
                             <ul class="treeview-menu">
-                                <li><a href="invoice.html"><i class="fa fa-angle-double-right"></i> Invoice</a></li>
-                                <li><a href="login.html"><i class="fa fa-angle-double-right"></i> Login</a></li>
-                                <li><a href="register.html"><i class="fa fa-angle-double-right"></i> Register</a></li>
-                                <li><a href="lockscreen.html"><i class="fa fa-angle-double-right"></i> Lockscreen</a></li>
-                                <li><a href="404.html"><i class="fa fa-angle-double-right"></i> 404 Error</a></li>
-                                <li><a href="500.html"><i class="fa fa-angle-double-right"></i> 500 Error</a></li>
-                                <li class="active"><a href="blank.html"><i class="fa fa-angle-double-right"></i> Blank Page</a></li>
+                                <?php foreach ($toolBox['models'] as $toolBoxModel) :?>
+                                <li class="<?php echo ($uri == $this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel)))? 'active':'' ?>">
+                                    <a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel)); ?>">
+                                        <i class="fa fa-angle-double-right"></i> <?php echo $this->translate($escaper->escapeHtml($toolBoxModel));?>
+                                    </a>
+                                </li>
+                                <?php endforeach; ?>
                             </ul>
                         </li>
+                        <?php endforeach; ?>
                     </ul>
                 </section>
                 <!-- /.sidebar -->
