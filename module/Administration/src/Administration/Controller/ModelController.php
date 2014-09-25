@@ -89,11 +89,15 @@ class ModelController extends AbstractActionController implements EventManagerAw
             if ($form->isValid()) {
                 $model->save($form->getData());
                 $this->getEventManager()->trigger('logAction', null, array('type' => 'info', 'message' => 'Added item of type "' . ucfirst($requested_model) . '"'));
-                return $this->redirectToModelAction($requested_model, 'index');
+                $redirect = $this->params()->fromPost('redirect_after_save');
+                if (!empty($redirect) && $redirect == 1) {
+                    return $this->redirectToModelAction($requested_model, 'index');
+                }
             }
         }
 
         return new ViewModel(array(
+            'model'              => $requested_model,
             'form'               => $form,
             'tabManager'         => $formManager->getTabManager(),
             'siteLanguages'      => $this->getServiceLocator()->get('SiteLanguages')->getLanguages(),

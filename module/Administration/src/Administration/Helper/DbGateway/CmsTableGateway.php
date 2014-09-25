@@ -78,7 +78,7 @@ class CmsTableGateway extends TableGateway
                 $fieldType = " ENUM( '0', '1' ) NOT NULL ";
                 break;
             case 'date':
-                $fieldType = " VARCHAR( 11 ) ";
+                $fieldType = " VARCHAR( 25 ) ";
                 break;
             case 'text':
                 $fieldType = " TEXT ";
