@@ -52,7 +52,7 @@ return array(
                                 'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
                                 'parent'        => '[0-9]*',
                                 'item'          => '[0-9_-]*',
-//                                'action'        => '(index|add|edit|save|delete|delete-multiple)',
+                                //'action'        => '(index|add|edit|save|delete|delete-multiple)',
                                 'action'        => '[a-zA-Z][a-zA-Z0-9_-]*'
                             ),
                             'defaults' => array(
@@ -60,7 +60,20 @@ return array(
                                 'action' => 'index'
                             )
                         )
-                    )
+                    ),
+                    'language' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => '/language/:language',
+                            'constraints' => array(
+                                'language' => '[0-9_-]*'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Administration\Controller\Language',
+                                'action' => 'index'
+                            )
+                        )
+                    ),
                 )
             ),
         ),
@@ -86,8 +99,9 @@ return array(
     ),
     'controllers' => array(
         'invokables' => array(
-            'Administration\Controller\Index' => 'Administration\Controller\IndexController',
-            'Administration\Controller\Model' => 'Administration\Controller\ModelController',
+            'Administration\Controller\Index'    => 'Administration\Controller\IndexController',
+            'Administration\Controller\Model'    => 'Administration\Controller\ModelController',
+            'Administration\Controller\Language' => 'Administration\Controller\LanguageController',
         ),
     ),
     // If set, the system auto-installs specific required models as per InstallerHelper
@@ -152,23 +166,4 @@ return array(
         'use_cookies' => true,
         'cookie_httponly' => true,
     ),
-//    'session' => array(
-//        'config' => array(
-//            'class' => 'Zend\Session\Config\SessionConfig',
-//            'options' => array(
-//                'name' => 'Admin',
-//            ),
-//        ),
-//        'remember_me_seconds' => 2419200,
-//        'use_cookies' => true,
-//        'cookie_httponly' => true,
-//        'save_handler' => 'SessionSaveHandler',
-//        'storage' => 'Zend\Session\Storage\SessionArrayStorage',
-//        'validators' => array(
-//            array(
-//                'Zend\Session\Validator\RemoteAddr',
-//                'Zend\Session\Validator\HttpUserAgent',
-//            ),
-//        ),
-//    ),
 );

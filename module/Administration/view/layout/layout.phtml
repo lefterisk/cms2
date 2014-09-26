@@ -1,16 +1,13 @@
 <?php echo $this->doctype(); ?>
-
 <html lang="en">
     <head>
         <meta charset="utf-8">
         <meta name="robots" content="noindex">
         <?php echo $this->headTitle('ZF2 '. $this->translate('Skeleton Application'))->setSeparator(' - ')->setAutoEscape(false) ?>
-
         <?php echo $this->headMeta()
             ->appendName('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
             ->appendHttpEquiv('X-UA-Compatible', 'IE=edge')
         ?>
-
         <!-- Le styles -->
         <?php $theme = 'AdminLTE'; echo $this->headLink(array('rel' => 'shortcut icon', 'type' => 'image/vnd.microsoft.icon', 'href' => $this->basePath() . '/img/favicon.ico'))
             ->prependStylesheet($this->basePath() . '/css/admin-style.css')
@@ -25,7 +22,6 @@
             ->prependStylesheet($this->basePath() . '/css/datepicker/datepicker3.css')
             ->prependStylesheet($this->basePath() . '/themes/' . $theme . '/css/style.css')
         ?>
-
         <!-- Scripts -->
         <?php echo $this->headScript()
             ->prependFile($this->basePath() . '/js/respond.min.js', 'text/javascript', array('conditional' => 'lt IE 9',))
@@ -49,6 +45,17 @@
                 </a>
                 <div class="navbar-right">
                     <ul class="nav navbar-nav">
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="glyphicon glyphicon-globe"></i>
+                                Lang: <b><?php echo $selectedLanguage; ?></b> <span class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu" role="menu">
+                                <?php foreach ($languages as $id => $language) : ?>
+                                    <li><a href="<?php echo $this->url('administration/language', array('language' => $id)); ?>"><?php echo $escaper->escapeHtml($language['name']); ?></a></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
                         <!-- User Account: style can be found in dropdown.less -->
                         <li class="dropdown user user-menu">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
@@ -58,7 +65,7 @@
                             <ul class="dropdown-menu">
                                 <!-- User image -->
                                 <li class="user-header bg-light-blue">
-                                    <img src="../../img/avatar3.png" class="img-circle" alt="User Image" />
+                                    <img src="/img/avatar3.png" class="img-circle" alt="User Image" />
                                     <p>
                                         <?php echo $escaper->escapeHtml($identity['name'] . ' ' . $identity['surname']); ?>
                                         <small><?php echo $escaper->escapeHtml($identity['user_group_name']); ?></small>
@@ -88,14 +95,26 @@
                             </a>
                         </li>
                         <?php foreach ($toolBoxes as $toolBox) :?>
-                        <li class="treeview"><!-- active-->
+                            <?php
+                            $isActiveBox = false;
+                            foreach ($toolBox['models'] as $toolBoxModel) {
+                                if (
+                                    strpos($uri,$this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel)) . '/') !== false
+                                    ||
+                                    $uri == $this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel))
+                                ) {
+                                    $isActiveBox = true;
+                                }
+                            }
+                            ?>
+                            <li class="treeview <?php echo ($isActiveBox) ? 'active' : '' ?>">
                             <a href="#">
                                 <i class="fa fa-folder"></i> <span><?php echo $this->translate($escaper->escapeHtml($toolBox['name']));?></span>
                                 <i class="fa fa-angle-left pull-right"></i>
                             </a>
                             <ul class="treeview-menu">
                                 <?php foreach ($toolBox['models'] as $toolBoxModel) :?>
-                                <li class="<?php echo ($uri == $this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel)))? 'active':'' ?>">
+                                <li class="<?php echo (strpos($uri,$this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel)) . '/') !== false || $uri == $this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel)))? 'active' : '' ?>">
                                     <a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $toolBoxModel)); ?>">
                                         <i class="fa fa-angle-double-right"></i> <?php echo $this->translate($escaper->escapeHtml($toolBoxModel));?>
                                     </a>

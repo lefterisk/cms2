@@ -33,11 +33,13 @@ class ModelController extends AbstractActionController implements EventManagerAw
             return $this->notPermittedViewmodel($requested_model);
         }
 
+        $this->addModelTranslation();
+
         $model            = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
             $viewModel    = new ViewModel(array(
-                'modelName' =>  $requested_model,
+                'modelName' => $requested_model,
                 'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
@@ -66,6 +68,8 @@ class ModelController extends AbstractActionController implements EventManagerAw
         if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'add')) {
             return $this->notPermittedViewmodel($requested_model);
         }
+
+        $this->addModelTranslation();
 
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
@@ -113,6 +117,8 @@ class ModelController extends AbstractActionController implements EventManagerAw
         if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'edit')) {
             return $this->notPermittedViewmodel($requested_model);
         }
+
+        $this->addModelTranslation();
 
         $requested_item  = $this->params()->fromRoute('item');
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
@@ -229,8 +235,8 @@ class ModelController extends AbstractActionController implements EventManagerAw
         catch (\Exception $ex) {
             $this->errors = array_merge($this->errors, $model->getErrors());
             $viewModel       = new ViewModel(array(
-                'modelName'  =>  $requested_model,
-                'errors'     => $this->errors
+                'modelName' =>  $requested_model,
+                'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
@@ -259,5 +265,14 @@ class ModelController extends AbstractActionController implements EventManagerAw
             $this->setEventManager(new EventManager());
         }
         return $this->events;
+    }
+
+    public function addModelTranslation()
+    {
+        $this->getServiceLocator()->get('translator')->addTranslationFilePattern(
+            'phpArray',
+            __DIR__ . '/../../../language/partial',
+            $this->params()->fromRoute('model').'_%s.php'
+        );
     }
 }

@@ -42,15 +42,19 @@ class Module
                 die();
             }
         }
-        $sessionContainer    = $e->getApplication()->getServiceManager()->get('Session');
+        $sessionContainer = $e->getApplication()->getServiceManager()->get('Session');
+        $adminLanguageHelper = $e->getApplication()->getServiceManager()->get('AdminLanguages');
 
         //Setting up the locale
         if (empty($sessionContainer->locale)) {
-            $adminLanguageHelper      = $e->getApplication()->getServiceManager()->get('AdminLanguages');
             $sessionContainer->locale = $adminLanguageHelper->getDefaultAdminLocale();
         }
 
         $e->getApplication()->getServiceManager()->get('translator')->setLocale($sessionContainer->locale);
+
+        $layout = $e->getApplication()->getServiceManager()->get('viewManager')->getViewModel();
+        $layout->setVariable('languages', $adminLanguageHelper->getLanguages());
+        $layout->setVariable('selectedLanguage', $sessionContainer->locale);
 
         //Switch between layouts/templates if route has been matched
         $sharedEventManager->attach('Zend\Mvc\Controller\AbstractController', 'dispatch', function(MvcEvent $e) use ($serviceManager, $config, $sharedEventManager) {

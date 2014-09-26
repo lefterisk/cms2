@@ -5,7 +5,6 @@ namespace Administration\Helper\DbGateway;
 use Zend\Db\Adapter\Adapter;
 use Zend\Db\TableGateway\TableGateway;
 
-
 class CmsTableGateway extends TableGateway
 {
     public function tableExists()
@@ -21,8 +20,8 @@ class CmsTableGateway extends TableGateway
 
     public function createTable(Array $columns)
     {
-        $sqlPartial    = '';
-        $primaryKeys   = '';
+        $sqlPartial  = '';
+        $primaryKeys = '';
         foreach ($columns as $column => $type){
             if (in_array($type,array('id','primary'))) {
                 $primaryKeys .= '`' . $column . '`,';
@@ -49,7 +48,7 @@ class CmsTableGateway extends TableGateway
     private function tableColumnExists($column)
     {
         $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTable() . " LIKE '" . $column . "'" );
-        $result = $statement->execute();
+        $result    = $statement->execute();
         if ($result->count()==0)
         {
             return false;
