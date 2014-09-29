@@ -29,6 +29,7 @@ class FormHandler
     {
         $tabManager = array();
         $firstTabFields = array_merge(
+            array($this->modelHandler->getParentFieldName()),
             $this->modelHandler->getRelationFieldsNames(),
             $this->modelHandler->getCustomSelectionFieldsNames(),
             $this->modelHandler->getModelManager()->getSimpleFields()
@@ -61,6 +62,10 @@ class FormHandler
             'type' => 'hidden',
             'name' => 'redirect_after_save',
         ));
+
+        if ($this->modelHandler->getModelManager()->getMaximumTreeDepth() > 0) {
+            $form = $this->addParentFieldToForm($form);
+        }
 
         foreach ($this->modelHandler->getModelManager()->getAllFields() as $field) {
             $type          = 'Zend\Form\Element\Text';
@@ -150,6 +155,31 @@ class FormHandler
         }
         $form = $this->addRelationFieldsToForm($form);
         $form = $this->addCustomSelectionFieldsToForm($form);
+        return $form;
+    }
+
+    protected function addParentFieldToForm(Form $form)
+    {
+        $value_options = array();
+        $value_options[0] = '---Root Item---';
+
+        foreach ($this->modelHandler->getModelTable()->fetchForListing() as $listingItem) {
+            $optionString = '';
+            foreach ($this->modelHandler->getModelManager()->getListingFields() as $listingField) {
+                $optionString .= $listingItem->{$listingField} . ' ';
+            }
+            $value_options[$listingItem->id] = $optionString;
+        }
+
+        $form->add(array(
+            'type' => 'Zend\Form\Element\Select',
+            'name' => 'parent_id',
+            'options' => array(
+                'label' => 'parent_id',
+                'value_options' => $value_options,
+            ),
+            'attributes' => array('class' => 'form-control', 'multiple' => 'multiple'),
+        ));
         return $form;
     }
 

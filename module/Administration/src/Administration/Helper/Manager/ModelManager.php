@@ -283,6 +283,7 @@ class ModelManager extends AbstractManager
             'integer' => array_merge($this->integers, $this->getRelationFields(),$this->getCustomSelectionFields()),
             'text'    => array_merge($this->texts,$this->long_texts),
         );
+
         $columnsWithTypes = array();
         foreach ($fields as $type => $columns) {
             foreach ($columns as $column) {

@@ -3,8 +3,10 @@ namespace Administration\Helper;
 
 use Administration\Helper\DbGateway\CmsTableGateway;
 use Administration\Helper\DbGateway\ModelTable;
+use Administration\Helper\DbGateway\ParentLookupTable;
 use Administration\Helper\DbGateway\TranslationTable;
 use Administration\Helper\Manager\ModelManager;
+use Administration\Helper\Manager\ParentManager;
 use Administration\Helper\Manager\TranslationManager;
 use Administration\Helper\Validator\ModelValidator;
 use Zend\Db\Adapter\AdapterInterface;
@@ -12,9 +14,11 @@ use Zend\Filter\Int;
 
 class ModelHandler
 {
-    private $errors               = array();
-    private $initialised          = false;
+    private $errors                  = array();
+    private $initialised             = false;
+    private $parentFieldName         = 'parent_id';
     private $modelManager;
+    private $parentManager;
     private $translationManager;
     private $relationHandlers        = array();
     private $customSelectionHandlers = array();
@@ -42,17 +46,20 @@ class ModelHandler
         if (!$modelDefinitionArray) {
             return;
         }
-        $this->modelManager  = new ModelManager($modelDefinitionArray);
+        $this->modelManager         = new ModelManager($modelDefinitionArray);
         $this->actionManagerHandler = new ActionManagerHandler($this->getModelManager()->getActionManagers());
 
-        $this->translationManager = new TranslationManager($this->modelManager);
-        $this->translationTable   = $this->initialiseTranslationTable();
+        $this->parentManager        = new ParentManager($this->modelManager);
+        $this->parentTable          = $this->initialiseModelParentLookupTable();
+
+        $this->translationManager   = new TranslationManager($this->modelManager);
+        $this->translationTable     = $this->initialiseTranslationTable();
 
         $this->initialiseRelationsTables();
         $this->initialiseCustomSelectionTables();
 
         //main table is initialised last so we have the relation & custom selection columns
-        $this->modelTable   = $this->initialiseMainTable();
+        $this->modelTable = $this->initialiseMainTable();
 
         if (count($this->getErrors()) == 0) {
             $this->initialised = true;
@@ -72,6 +79,16 @@ class ModelHandler
     public function getTranslationTable()
     {
         return $this->translationTable;
+    }
+
+    public function getParentManager()
+    {
+        return $this->parentManager;
+    }
+
+    public function getParentTable()
+    {
+        return $this->parentTable;
     }
 
     public function getTranslationManager()
@@ -108,6 +125,12 @@ class ModelHandler
     {
         $gateway =  new CmsTableGateway($this->modelManager->getTableName(), $this->adapter);
         return new ModelTable($gateway, $this->modelManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
+    }
+
+    private function initialiseModelParentLookupTable()
+    {
+        $gateway =  new CmsTableGateway($this->parentManager->getTableName(), $this->adapter);
+        return new ParentLookupTable($gateway, $this->parentManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
     }
 
     private function initialiseTranslationTable()
@@ -258,6 +281,11 @@ class ModelHandler
         return array_merge($this->getCustomSelectionFieldsForMainTable(), $this->getCustomSelectionFieldsForCustomSelectionTables());
     }
 
+    public function getParentFieldName()
+    {
+        return $this->parentFieldName;
+    }
+
     public function getOverAllInputFilter()
     {
         //main table input-filter
@@ -284,6 +312,7 @@ class ModelHandler
         $mainTableFields         = array();
         $translationTableFields  = array();
         $relationTablesFields    = array();
+        $parentTableField        = array();
         $relationsTablesToFields = $this->getRelationFieldsForRelationTables();
         $customSelectionTablesFields   = array();
         $customSelectionTablesToFields = $this->getCustomSelectionFieldsForCustomSelectionTables();
@@ -316,10 +345,16 @@ class ModelHandler
                     }
                 }
             }
+            if ($fieldName == $this->parentFieldName) {
+                $parentTableField = $fieldValue;
+            }
         }
 
         if (isset($data['id']) && !empty($data['id'])) {
             $this->getModelTable()->save($data['id'], $mainTableFields);
+            if ($this->modelManager->getMaximumTreeDepth() > 0) {
+                $this->parentTable->save($data['id'], $this->getModelManager()->getPrefix() . 'id', $this->parentFieldName, $parentTableField);
+            }
             foreach ($translationTableFields as $languageId => $fields) {
                 $this->getTranslationTable()->save($fields, array($this->getModelManager()->getPrefix() . 'id' => $data['id'], 'language_id' => $languageId));
             }
@@ -384,6 +419,7 @@ class ModelHandler
             $this->errors[] = $this->errorMsgArray['ERROR_6'];
             throw new \Exception();
         }
+
         $translationData = array();
         if ($this->modelManager->isMultiLingual()) {
             $rawTranslationTableData = $this->getTranslationTable()->getTableGateway()->select(array($this->getModelManager()->getPrefix() . 'id' => $id));
@@ -405,6 +441,7 @@ class ModelHandler
                 }
             }
         }
+
         $customSelectionData = array();
         foreach($this->getCustomSelectionHandlers() as $customSelectionHandler) {
             if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresTable()) {
@@ -414,7 +451,15 @@ class ModelHandler
                 }
             }
         }
-        return $this->getActionManagerHandler()->getActionProcessedData('postSelect', array_merge($mainTableData->getArrayCopy(),$translationData,$relationData,$customSelectionData));
+
+        $parentFieldFrame = array();
+        if ($this->modelManager->getMaximumTreeDepth() > 0 && $this->getParentManager()->requiresTable()) {
+            $parentData = $this->parentTable->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
+            foreach ($parentData as $result) {
+                $parentFieldFrame[$this->getParentFieldName()][] = $result->{$this->getParentFieldName()};
+            }
+        }
+        return $this->getActionManagerHandler()->getActionProcessedData('postSelect', array_merge($mainTableData->getArrayCopy(),$translationData,$relationData,$customSelectionData,$parentFieldFrame));
     }
 
     public function deleteItemById($id, $hard = true)

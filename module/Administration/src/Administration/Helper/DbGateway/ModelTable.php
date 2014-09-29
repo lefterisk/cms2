@@ -7,9 +7,9 @@ use Zend\Db\Sql\Select;
 
 class ModelTable extends AbstractTable
 {
-    public function fetchForListing(Array $mainTableFields = array(), Array $joinsDefinitions = array(), Array $whereDefinitions = array())
+    public function fetchForListing(Array $mainTableFields = array(), Array $joinsDefinitions = array(), Array $whereDefinitions = array(), $recursive = false, $treeLevel = 0)
     {
-        $result = $this->tableGateway->select(function (Select $select)  use ($mainTableFields, $joinsDefinitions, $whereDefinitions) {
+        $results = $this->tableGateway->select(function (Select $select)  use ($mainTableFields, $joinsDefinitions, $whereDefinitions) {
 
             $predicate = new Predicate();
 
@@ -31,7 +31,19 @@ class ModelTable extends AbstractTable
                 $select->where($predicate);
             }
         });
-        return $result;
+
+        $resultArray = array();
+        //Recursive call to get children items
+        foreach ($results as $result) {
+            $result['tree_level'] = $treeLevel;
+            $resultArray[]        = $result;
+            if ($recursive) {
+                $whereDefinitions['parent_id'] = $result->id;
+                $resultArray      = array_merge($resultArray, $this->fetchForListing($mainTableFields,$joinsDefinitions,$whereDefinitions, true, $treeLevel+1));
+            }
+        }
+
+        return $resultArray;
     }
 
     public function fetchForRelationSelect(Array $fields, $where = array())
@@ -40,10 +52,11 @@ class ModelTable extends AbstractTable
             $this->tableGateway->setColumns(array_merge($fields, array('id')));
         }
 
-        $query = $this->tableGateway->select();
 
         if (is_array($where) && !empty($where) || $where instanceof Predicate) {
-            $query->where($where);
+            $query = $this->tableGateway->select($where);
+        } else {
+            $query = $this->tableGateway->select();
         }
         return $query;
     }
