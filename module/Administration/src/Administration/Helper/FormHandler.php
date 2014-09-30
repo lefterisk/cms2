@@ -160,11 +160,50 @@ class FormHandler
 
     protected function addParentFieldToForm(Form $form)
     {
-        $value_options = array();
-        $value_options[0] = '---Root Item---';
+        $value_options             = array('0' => '---Root Item---');
+        $joinDefinitions           = array();
+        $additionalWhereStatements = array();
+        $recursive                 = false;
 
-        foreach ($this->modelHandler->getModelTable()->fetchForListing() as $listingItem) {
+        if ($this->modelHandler->getTranslationManager()->requiresTable()) {
+            //translations
+            $joinDefinitions[] = array(
+                'table_name'          => $this->modelHandler->getTranslationManager()->getTableName(),
+                'on_field_expression' => $this->modelHandler->getTranslationManager()->getTableName() . '.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
+                'return_fields'       => $this->modelHandler->getTranslationManager()->getTableSpecificListingFields($this->modelHandler->getModelManager()->getListingFields()),
+                'where'               => array('language_id' => $this->languageHelper->getPrimaryLanguageId())
+            );
+        }
+
+        if ($this->modelHandler->getParentManager()->requiresTable()) {
+            //parent relation
+            $joinDefinitions[] = array(
+                'table_name'          => $this->modelHandler->getParentManager()->getTableName(),
+                'on_field_expression' => $this->modelHandler->getParentManager()->getTableName() . '.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
+                'return_fields'       => $this->modelHandler->getParentManager()->getTableSpecificListingFields(array($this->modelHandler->getParentManager()->getFieldName())),
+                'where'               => array()
+            );
+            $additionalWhereStatements['parent_id'] = 0;
+            $recursive = true;
+        }
+
+        $results = $this->modelHandler->getModelTable()->fetchForListing(
+            $this->modelHandler->getModelManager()->getTableSpecificListingFields(
+                $this->modelHandler->getModelManager()->getListingFields()
+            ),
+            $joinDefinitions,
+            $additionalWhereStatements,
+            $recursive
+        );
+
+        foreach ($results as $listingItem) {
             $optionString = '';
+            for ($i = 1; $i <= $listingItem->tree_level; $i++) {
+                if ($i == 1) {
+                    $optionString .= '|';
+                }
+                $optionString .= '--';
+            }
             foreach ($this->modelHandler->getModelManager()->getListingFields() as $listingField) {
                 $optionString .= $listingItem->{$listingField} . ' ';
             }

@@ -17,8 +17,7 @@ class ModelTable extends AbstractTable
                 $mainTableFields = array_merge(array('id'), $mainTableFields);
                 $select->columns($mainTableFields);
             }
-            if (count($joinsDefinitions) > 0)
-            {
+            if (count($joinsDefinitions) > 0) {
                 foreach ($joinsDefinitions as $join) {
                     $select->join($join['table_name'], $join['on_field_expression'], $join['return_fields']);
                     $whereDefinitions = array_merge($whereDefinitions, $join['where']);
@@ -39,7 +38,7 @@ class ModelTable extends AbstractTable
             $resultArray[]        = $result;
             if ($recursive) {
                 $whereDefinitions['parent_id'] = $result->id;
-                $resultArray      = array_merge($resultArray, $this->fetchForListing($mainTableFields,$joinsDefinitions,$whereDefinitions, true, $treeLevel+1));
+                $resultArray      = array_merge($resultArray, $this->fetchForListing($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
             }
         }
 
