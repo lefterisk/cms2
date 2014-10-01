@@ -11,6 +11,7 @@ namespace Administration\Controller;
 
 use Administration\Helper\FormHandler;
 use Administration\Helper\ListingHandler;
+use Administration\Helper\ModelBreadCrumbHandler;
 use Administration\Helper\ModelHandler;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
@@ -45,18 +46,37 @@ class ModelController extends AbstractActionController implements EventManagerAw
             return $viewModel->setTemplate('error/admin/model');
         }
 
+        $parent             = ($this->params()->fromRoute('parent')) ? $this->params()->fromRoute('parent') : 0;
+
+        if ((int)$parent != 0 ) {
+            try {
+                $item = $model->getItemById($parent);
+            } catch (\Exception $ex) {
+                $this->errors = array_merge($this->errors, $model->getErrors());
+                $viewModel    = new ViewModel(array(
+                    'modelName' =>  $requested_model,
+                    'errors'    => $this->errors
+                ));
+                return $viewModel->setTemplate('error/admin/model');
+            }
+        }
+
         $listingHandler     = new ListingHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
         $multipleDeleteForm = new Form();
         $multipleDeleteForm->setAttribute('action',  $this->url()->fromRoute('administration/model', array('action' => 'delete-multiple', 'model' => $requested_model)));
         $multipleDeleteForm->setAttribute('method', 'post');
 
+        $breadCrumbs = new ModelBreadCrumbHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
+
         return new ViewModel(array(
             'multipleDeleteForm' => $multipleDeleteForm,
             'model'              => $requested_model,
-            'listing'            => $listingHandler->getListing(),
+            'listing'            => $listingHandler->getListing($parent),
             'listingFields'      => $listingHandler->getListingFieldsDefinitions(),
             'userGroup'          => $this->identity['user_group_name'],
-            'permissionHelper'   => $this->acl
+            'permissionHelper'   => $this->acl,
+            'treeView'           => ($model->getModelManager()->getMaximumTreeDepth() > 0) ? true : false,
+            'breadCrumbs'        => $breadCrumbs->getBreadCrumbLinksArray($parent)
         ));
     }
 

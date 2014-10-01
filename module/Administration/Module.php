@@ -151,6 +151,16 @@ class Module
                             $layout->setVariable('identity', $authService->getIdentity());
                         }
                         $layout->setTemplate( $module_conf['layout'] );
+
+                        //ACL setup for Group & model
+                        $permissionHelper = $serviceManager->get('PermissionHelper');
+                        //making identity available to layout
+                        if ($authService->hasIdentity()) {
+                            $identity = $authService->getIdentity();
+                            $layout->setVariable('identity', $identity);
+                            $layout->setVariable('toolBoxes', $permissionHelper->getPermittedToolBoxes($identity['user_group_id']));
+                        }
+
                     }
                     switch ($e->getResponse()->getStatusCode()) {
                         case '500':

@@ -5,6 +5,9 @@
     <ol class="breadcrumb">
         <li><a href="<?php echo $this->url('administration'); ?>"><i class="fa fa-dashboard"></i> Home</a></li>
         <li><a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model)); ?>"><?php echo $this->translate($model); ?></a></li>
+        <?php foreach ($breadCrumbs as $crumb) : ?>
+            <li><a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model, 'parent' => $crumb['id'])); ?>"><?php echo $this->escapeHtml($crumb['text']); ?></a></li>
+        <?php endforeach; ?>
     </ol>
 </section>
 
@@ -21,7 +24,7 @@
                     <?php foreach ($listingFields as $field => $definition) : ?>
                         <th><?php echo $this->translate($field); ?>&nbsp;&nbsp;&nbsp;</th>
                     <?php endforeach; ?>
-                        <th width="50">&nbsp;</th>
+                        <th width="<?php echo ($treeView) ? '70' : '50'; ?>">&nbsp;</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -30,35 +33,63 @@
                         <td class="text-center"><input type="checkbox" name="multipleDeleteCheck[]" value="<?php echo $item->id ?>"/></td>
                     <?php $fieldCount = 0; ?>
                     <?php foreach ($listingFields as $field => $definition) : ?>
-                        <?php
-                        $fieldCount++;
-                        $treeLevelIndicator = 0;
-                        if ($fieldCount == 1) {
-                            for ($k = 1; $k <= $item->tree_level; $k++) {
-                                $treeLevelIndicator = 20 * $item->tree_level;
-                            }
-                        }
-                        ?>
                         <?php if ($definition == 'boolean' && $permissionHelper->isAllowed($userGroup, null, 'edit')) : ?>
                             <td width="30" class="text-center"><input type="checkbox" class="simple bootstrapSwitchIndex" data-model="<?php echo $model ?>" data-field="<?php echo $field ?>" data-id="<?php echo $item->id ?>" name="<?php echo $field ?>[<?php echo $item->id ?>]" <?php echo ($item->{$field}) ? 'checked' : ''; ?>></td>
                         <?php elseif ($definition == 'boolean' && !$permissionHelper->isAllowed($userGroup, null, 'edit')) : ?>
                             <td width="30" class="text-center"><span class="label label-<?php echo ($item->{$field})? 'success' : 'danger' ?>"><?php echo $this->translate( ($item->{$field}) ? 'True' : 'False'); ?></span></td>
                         <?php else: ?>
-                            <td><span style="position:relative; top:-4px;height:10px;display:inline-block;border-bottom:1px #444 dotted; width: <?php echo $treeLevelIndicator ?>px; <?php echo ($treeLevelIndicator)? 'margin-right:5px;':'' ?>"></span><?php echo $item->{$field}; ?></td>
+                            <td><?php echo $item->{$field}; ?></td>
                         <?php endif; ?>
                     <?php endforeach; ?>
                         <td class="text-center">
-                            <div class="btn-group">
+                            <div class="btn-group hidden-xs">
                                 <?php if ($permissionHelper->isAllowed($userGroup, null, 'edit')) : ?>
                                 <a href="<?php echo $this->url('administration/model', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-info">
                                     <span class="glyphicon  glyphicon-pencil"></span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($treeView) : ?>
+                                    <a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model, 'parent' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-primary">
+                                        <span class="glyphicon glyphicon-folder-open"></span>
+                                    </a>
                                 <?php endif; ?>
                                 <?php if ($permissionHelper->isAllowed($userGroup, null, 'delete')) : ?>
                                 <a href="<?php echo $this->url('administration/model', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>" type="button" class="btn btn-xs btn-warning">
                                     <span class="glyphicon  glyphicon-trash"></span>
                                 </a>
                                 <?php endif; ?>
+                            </div>
+                            <div class="btn-group btn-group-xs visible-xs-block">
+                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                    <span class="glyphicon glyphicon-cog"></span>&nbsp;
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                    <?php if ($permissionHelper->isAllowed($userGroup, null, 'edit')) : ?>
+                                        <li>
+                                            <a href="<?php echo $this->url('administration/model', array('action' => 'edit', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>">
+                                                <span class="glyphicon  glyphicon-pencil"></span>
+                                                <?php echo $this->translate('Edit'); ?>
+                                            </a>
+                                        </li>
+                                    <?php endif; ?>
+                                    <?php if ($treeView) : ?>
+                                        <li>
+                                            <a href="<?php echo $this->url('administration/model', array('action' => 'index', 'model' => $model, 'parent' => $this->escapeHtml($item->id) )); ?>">
+                                                <span class="glyphicon  glyphicon-folder-open"></span>
+                                                <?php echo $this->translate('Contents'); ?>
+                                            </a>
+                                        </li>
+                                    <?php endif; ?>
+                                    <?php if ($permissionHelper->isAllowed($userGroup, null, 'delete')) : ?>
+                                        <li>
+                                            <a href="<?php echo $this->url('administration/model', array('action' => 'delete', 'model' => $model, 'item' => $this->escapeHtml($item->id) )); ?>">
+                                                <span class="glyphicon  glyphicon-trash"></span>
+                                                <?php echo $this->translate('Delete'); ?>
+                                            </a>
+                                        </li>
+                                    <?php endif; ?>
+                                </ul>
                             </div>
                         </td>
                     </tr>

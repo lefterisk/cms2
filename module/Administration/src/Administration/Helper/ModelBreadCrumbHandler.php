@@ -3,7 +3,7 @@ namespace Administration\Helper;
 
 use Administration\Helper\DbGateway\SiteLanguageHelper;
 
-class ListingHandler
+class ModelBreadCrumbHandler
 {
     protected $modelHandler;
     protected $languageHelper;
@@ -14,11 +14,21 @@ class ListingHandler
         $this->languageHelper = $languageHelper;
     }
 
-    public function getListing($parent = 0)
+    public function getBreadCrumbLinksArray($currentItemId)
     {
+        $linksArray = $this->getItemLinkRecursive($currentItemId);
+        return array_reverse($linksArray);
+    }
+
+    protected function getItemLinkRecursive($id)
+    {
+        if ($id == 0) {
+            return array();
+        }
         $joinDefinitions           = array();
         $additionalWhereStatements = array();
         $recursive                 = false;
+        $linksArray                = array();
 
         if ($this->modelHandler->getTranslationManager()->requiresTable()) {
             $joinDefinitions[] = $this->getTranslationTableJoinDefinition($this->languageHelper->getPrimaryLanguageId());
@@ -26,11 +36,12 @@ class ListingHandler
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
             $joinDefinitions[] = $this->getParentTableJoinDefinition();
-            $additionalWhereStatements['parent_id'] = $parent;
-            $recursive = false;
+            //$additionalWhereStatements['parent_id'] = $parent;
         }
 
-        $results = $this->modelHandler->getModelTable()->fetchForListing(
+        $additionalWhereStatements['id'] = $id;
+
+        $result = $this->modelHandler->getModelTable()->fetchForListing(
             $this->modelHandler->getModelManager()->getTableSpecificListingFields(
                 $this->modelHandler->getModelManager()->getListingFields()
             ),
@@ -38,22 +49,14 @@ class ListingHandler
             $additionalWhereStatements,
             $recursive
         );
-        return $results;
-    }
 
-    public function getListingFieldsDefinitions()
-    {
-        $fieldDefinitions = array();
-        foreach ($this->modelHandler->getModelManager()->getListingFields() as $field) {
-            if (in_array($field, $this->modelHandler->getModelManager()->getBooleans())) {
-                $fieldDefinitions[$field] = 'boolean';
-            } elseif (in_array($field, $this->modelHandler->getModelManager()->getDates())) {
-                $fieldDefinitions[$field] = 'date';
-            } else {
-                $fieldDefinitions[$field] = 'varchar';
-            }
+        $currentItem = reset($result);
+        $linksArray[] = array('id' => $currentItem->id, 'parent_id' => $currentItem->parent_id, 'text' => $currentItem->{reset($this->modelHandler->getModelManager()->getListingFields())});
+        if ($currentItem->parent_id != 0 ) {
+            $linksArray = array_merge($linksArray, $this->getItemLinkRecursive($currentItem->parent_id));
         }
-        return $fieldDefinitions;
+
+        return $linksArray;
     }
 
     protected function getTranslationTableJoinDefinition($languageId)
