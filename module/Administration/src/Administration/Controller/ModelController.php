@@ -46,7 +46,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
             return $viewModel->setTemplate('error/admin/model');
         }
 
-        $parent             = ($this->params()->fromRoute('parent')) ? $this->params()->fromRoute('parent') : 0;
+        $parent = ($this->params()->fromRoute('parent')) ? $this->params()->fromRoute('parent') : 0;
 
         if ((int)$parent != 0 ) {
             try {
@@ -63,7 +63,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
 
         $listingHandler     = new ListingHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
         $multipleDeleteForm = new Form();
-        $multipleDeleteForm->setAttribute('action',  $this->url()->fromRoute('administration/model', array('action' => 'delete-multiple', 'model' => $requested_model)));
+        $multipleDeleteForm->setAttribute('action', $this->url()->fromRoute('administration/model', array('action' => 'delete-multiple', 'model' => $requested_model)));
         $multipleDeleteForm->setAttribute('method', 'post');
 
         $breadCrumbs = new ModelBreadCrumbHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
@@ -144,9 +144,9 @@ class ModelController extends AbstractActionController implements EventManagerAw
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
-                'modelName'  =>  $requested_model,
-                'errors' => $this->errors
+            $viewModel    = new ViewModel(array(
+                'modelName' => $requested_model,
+                'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
@@ -204,9 +204,9 @@ class ModelController extends AbstractActionController implements EventManagerAw
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
-                'modelName'  =>  $requested_model,
-                'errors' => $this->errors
+            $viewModel    = new ViewModel(array(
+                'modelName' => $requested_model,
+                'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
@@ -218,9 +218,9 @@ class ModelController extends AbstractActionController implements EventManagerAw
         }
         catch (\Exception $ex) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
-                'modelName'  =>  $requested_model,
-                'errors'     => $this->errors
+            $viewModel    = new ViewModel(array(
+                'modelName' => $requested_model,
+                'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
@@ -240,9 +240,9 @@ class ModelController extends AbstractActionController implements EventManagerAw
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
-                'modelName'  =>  $requested_model,
-                'errors' => $this->errors
+            $viewModel    = new ViewModel(array(
+                'modelName' => $requested_model,
+                'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
         }
@@ -254,7 +254,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
         }
         catch (\Exception $ex) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
+            $viewModel    = new ViewModel(array(
                 'modelName' =>  $requested_model,
                 'errors'    => $this->errors
             ));
