@@ -24,7 +24,7 @@ class ModelTable extends AbstractTable
                 }
             }
             if (count($whereDefinitions) > 0) {
-                foreach ($whereDefinitions  as $field => $value) {
+                foreach ($whereDefinitions as $field => $value) {
                     $predicate->equalTo($field, $value);
                 }
                 $select->where($predicate);
@@ -38,7 +38,7 @@ class ModelTable extends AbstractTable
             $resultArray[]        = $result;
             if ($recursive) {
                 $whereDefinitions['parent_id'] = $result->id;
-                $resultArray      = array_merge($resultArray, $this->fetchForListing($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
+                $resultArray = array_merge($resultArray, $this->fetchForListing($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
             }
         }
 
