@@ -34,7 +34,7 @@
                     <?php $fieldCount = 0; ?>
                     <?php foreach ($listingFields as $field => $definition) : ?>
                         <?php if ($definition == 'boolean' && $permissionHelper->isAllowed($userGroup, null, 'edit')) : ?>
-                            <td width="30" class="text-center"><input type="checkbox" class="simple bootstrapSwitchIndex" data-model="<?php echo $model ?>" data-field="<?php echo $field ?>" data-id="<?php echo $item->id ?>" name="<?php echo $field ?>[<?php echo $item->id ?>]" <?php echo ($item->{$field}) ? 'checked' : ''; ?>></td>
+                            <td width="30" class="text-center"><input type="checkbox" class="simple bootstrapSwitchIndex" data-url="<?php echo $this->url('administration/model', array('action' => 'edit-single-boolean-field', 'model' => $model, 'item' => $this->escapeHtml($item->id))); ?>" data-field="<?php echo $this->escapeHtmlAttr($field) ?>" name="<?php echo $field ?>[<?php echo $item->id ?>]" <?php echo ($item->{$field}) ? 'checked' : ''; ?>></td>
                         <?php elseif ($definition == 'boolean' && !$permissionHelper->isAllowed($userGroup, null, 'edit')) : ?>
                             <td width="30" class="text-center"><span class="label label-<?php echo ($item->{$field})? 'success' : 'danger' ?>"><?php echo $this->translate( ($item->{$field}) ? 'True' : 'False'); ?></span></td>
                         <?php else: ?>

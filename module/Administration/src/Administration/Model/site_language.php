@@ -24,9 +24,7 @@ return array(
     ),
     "max_tree_depth"  => 0,
     "listing_fields"  => array('name','code','status','is_primary'),
-    "form_manager"    => array(
-
-    ),
+    "form_manager"    => array(),
     "input_filters"   => array(
         array(
             "name" => "name",

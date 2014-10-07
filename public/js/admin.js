@@ -92,9 +92,8 @@ var AppView = Backbone.View.extend({
             offText: '<span class="glyphicon glyphicon-remove"></span>',
             onSwitchChange: function(event, state) {
                 var currentSwitch = $(this);
-                var model = $(this).data('model'),
-                    field = $(this).data('field'),
-                    id    = $(this).data('id');
+                var url   = $(this).data('url'),
+                    field = $(this).data('field');
 
                 var fieldValue;
                 if (state) {
@@ -109,20 +108,16 @@ var AppView = Backbone.View.extend({
                 //disable the switch while there is interaction with server
                 currentSwitch.bootstrapSwitch('disabled',true);
                 $.ajax({
-                    url      : '/administration/model/' + model + '/' + id + '/editSingleBooleanField',
+                    url      : url,
                     type     : 'POST',
                     data     : data,
                     dataType :'json',
                     success  : function(response) {
                         if (response.success) {
                             currentSwitch.bootstrapSwitch('disabled',false);
-//                            console.log('success');
-//                            console.log(response.messages);
                         } else {
                             currentSwitch.bootstrapSwitch('disabled',false);
                             currentSwitch.bootstrapSwitch('toggleState','skip');
-//                            console.log('failure');
-//                            console.log(response.messages);
                         }
                     },
                     error: function (xhr, ajaxOptions, thrownError) {

@@ -27,9 +27,13 @@ class FormHandler
 
     private function getDefaultTabManager()
     {
-        $tabManager = array();
+        $tabManager     = array();
+        $firstTabFields = array();
+        if ($this->modelHandler->getModelManager()->getMaximumTreeDepth() > 0) {
+            $firstTabFields = array($this->modelHandler->getParentFieldName());
+        }
         $firstTabFields = array_merge(
-            array($this->modelHandler->getParentFieldName()),
+            $firstTabFields,
             $this->modelHandler->getRelationFieldsNames(),
             $this->modelHandler->getCustomSelectionFieldsNames(),
             $this->modelHandler->getModelManager()->getSimpleFields()

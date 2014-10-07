@@ -36,6 +36,7 @@ class ModelHandler
         'ERROR_8'  => 'When deleting an item, "hard" parameter if provided must be a boolean!',
         'ERROR_9'  => 'Something went wrong while trying to delete the requested item(s)!',
         'ERROR_10' => 'When requesting deletion of multiple items you have to provide an array of ids to delete!',
+        'ERROR_11' => 'The boolean field you tried to edit does not exist ind the database',
     );
 
     public function __construct($model, AdapterInterface $dbAdapter)
@@ -530,5 +531,15 @@ class ModelHandler
             'successfulDeletes' => $successfulDeletes,
             'failedDeletes'     => $failedDeletes
         );
+    }
+
+    public function editSingleBooleanField($id, $field, $value)
+    {
+        if ($this->getModelTable()->getTableGateway()->tableColumnExists($field)) {
+            $this->getModelTable()->getTableGateway()->update(array($field => $value), array('id' => $id));
+        } else {
+            $this->errors[] = $this->errorMsgArray['ERROR_11'];
+            throw new \Exception();
+        }
     }
 }

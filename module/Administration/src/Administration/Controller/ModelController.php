@@ -18,6 +18,7 @@ use Zend\EventManager\EventManagerAwareInterface;
 use Zend\Form\Form;
 use Zend\Json\Server\Request;
 use Zend\Mvc\Controller\AbstractActionController;
+use Zend\View\Model\JsonModel;
 use Zend\View\Model\ViewModel;
 
 
@@ -259,6 +260,73 @@ class ModelController extends AbstractActionController implements EventManagerAw
                 'errors'    => $this->errors
             ));
             return $viewModel->setTemplate('error/admin/model');
+        }
+    }
+
+    public function editSingleBooleanFieldAction()
+    {
+        $requested_model = $this->params()->fromRoute('model');
+
+        //identity & acl comes from module.php (bootstrap)
+        if (!$this->acl->isAllowed($this->identity['user_group_name'], null, 'edit')) {
+            return $this->notPermittedViewmodel($requested_model);
+        }
+
+        $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
+        if (!$model->isInitialised()) {
+            $this->errors = array_merge($this->errors, $model->getErrors());
+            return new JsonModel(array(
+                'modelName' => $requested_model,
+                'success'   => false,
+                'errors'    => $this->errors
+            ));
+        }
+
+        //See if item to be edited exists
+        try {
+            $item = $model->getItemById($this->params()->fromRoute('item'));
+        }
+        catch (\Exception $ex) {
+            return new JsonModel(array(
+                'modelName' => $requested_model,
+                'success'   => false,
+                'errors'    => array('Something went wrong with retrieving the Item you wish to edit!')
+            ));
+        }
+        if (!$item) {
+            return new JsonModel(array(
+                'modelName' => $requested_model,
+                'success'   => false,
+                'errors'    => array('The Item you are trying to edit does not exist!')
+            ));
+        } else {
+            $id    = $this->params()->fromRoute('item');
+            $field = $this->params()->fromPost('field');
+            $value = $this->params()->fromPost('value');
+
+            if (!empty($field) && isset($value)) {
+                try{
+                    $model->editSingleBooleanField($id, $field, $value);
+                    return new JsonModel(array(
+                        'modelName' => $requested_model,
+                        'success'   => true,
+                        'field'     => $this->params()->fromPost('field'),
+                        'value'     => $this->params()->fromPost('value')
+                    ));
+                } catch (\Exception $ex) {
+                    return new JsonModel(array(
+                        'modelName' => $requested_model,
+                        'success'   => false,
+                        'errors'    => array($ex->getMessage())
+                    ));
+                }
+            } else {
+                return new JsonModel(array(
+                    'modelName' => $requested_model,
+                    'success'   => false,
+                    'errors'    => array('You must supply both field name and value!')
+                ));
+            }
         }
     }
 

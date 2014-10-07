@@ -45,7 +45,7 @@ class CmsTableGateway extends TableGateway
         }
     }
 
-    private function tableColumnExists($column)
+    public function tableColumnExists($column)
     {
         $statement = $this->adapter->createStatement("SHOW COLUMNS FROM " . $this->getTable() . " LIKE '" . $column . "'" );
         $result    = $statement->execute();
