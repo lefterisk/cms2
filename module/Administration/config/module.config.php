@@ -76,6 +76,20 @@ return array(
                             )
                         )
                     ),
+                    'siteMap' => array(
+                        'type' => 'segment',
+                        'options' => array(
+                            'route' => '/site-map[/:action]',
+                            'constraints' => array(
+                                'action'  => '[a-zA-Z][a-zA-Z0-9_-]*',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Administration\Controller\SiteMap',
+                                'action'  => 'index'
+                            )
+                        ),
+                        'may_terminate' => true,
+                    ),
                 )
             ),
         ),
@@ -104,6 +118,7 @@ return array(
             'Administration\Controller\Index'    => 'Administration\Controller\IndexController',
             'Administration\Controller\Model'    => 'Administration\Controller\ModelController',
             'Administration\Controller\Language' => 'Administration\Controller\LanguageController',
+            'Administration\Controller\SiteMap'  => 'Administration\Controller\SiteMapController',
         ),
     ),
     // If set, the system auto-installs specific required models as per InstallerHelper

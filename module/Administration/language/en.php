@@ -15,4 +15,5 @@ return array(
     'user'  => 'Users',
     'user_group'  => 'User groups',
     'tool_box'  => 'Sidebar tool-boxes',
+    'site_map'  => 'Site map',
 );

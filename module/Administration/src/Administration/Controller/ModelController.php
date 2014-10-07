@@ -55,7 +55,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
             } catch (\Exception $ex) {
                 $this->errors = array_merge($this->errors, $model->getErrors());
                 $viewModel    = new ViewModel(array(
-                    'modelName' =>  $requested_model,
+                    'modelName' => $requested_model,
                     'errors'    => $this->errors
                 ));
                 return $viewModel->setTemplate('error/admin/model');

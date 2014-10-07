@@ -2,7 +2,6 @@
 /**
  *Example configuration array for a model
  */
-$modelManager = $this->modelManager;
 return array(
     "model"         => "example",
     "prefix"        => "example_",
@@ -38,7 +37,7 @@ return array(
         "multilingual_files"      => array(),
     ),
     "max_tree_depth"  => 1,
-    "listing_fields"  => array('pipes1','pipes_date','pipes_boolean'),
+    "listing_fields"  => array('pipes1','pipes_date','status'),
     "form_manager"    => array(
 //        "tab_name" => array(
 //            "field_name"

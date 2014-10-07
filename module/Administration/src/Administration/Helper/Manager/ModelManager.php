@@ -6,6 +6,7 @@ class ModelManager extends AbstractManager
 {
     private $model = '';
     private $prefix = '';
+    public static $published = 'status';
     private $stand_alone = false;
     private $model_db_sync = false;
     private $max_tree_depth = 0;
@@ -93,7 +94,7 @@ class ModelManager extends AbstractManager
 
     public function getPublishedField()
     {
-        return $this->getPrefix() . 'status';
+        return ModelManager::$published;
     }
 
     public function getBooleans()
@@ -146,12 +147,10 @@ class ModelManager extends AbstractManager
 
     public function getMultilingualVarchars()
     {
-        if ($this->isStandAlonePage() && !in_array($this->getPrefix() . 'meta_title', $this->multilingual_varchars))
-        {
+        if ($this->isStandAlonePage() && !in_array($this->getPrefix() . 'meta_title', $this->multilingual_varchars)) {
             array_push($this->multilingual_varchars, $this->getPrefix() . 'meta_title');
         }
-        if ($this->isStandAlonePage() && !in_array($this->getPrefix() . 'meta_slug', $this->multilingual_varchars))
-        {
+        if ($this->isStandAlonePage() && !in_array($this->getPrefix() . 'meta_slug', $this->multilingual_varchars)) {
             array_push($this->multilingual_varchars, $this->getPrefix() . 'meta_slug');
         }
         return $this->multilingual_varchars;
@@ -159,8 +158,7 @@ class ModelManager extends AbstractManager
 
     public function getMultilingualTexts()
     {
-        if ($this->isStandAlonePage() && !in_array($this->getPrefix() . 'meta_description', $this->multilingual_texts))
-        {
+        if ($this->isStandAlonePage() && !in_array($this->getPrefix() . 'meta_description', $this->multilingual_texts)) {
             array_push($this->multilingual_texts, $this->getPrefix() . 'meta_description');
         }
         return $this->multilingual_texts;
@@ -203,8 +201,7 @@ class ModelManager extends AbstractManager
     public function getMultilingualFilesCaptions()
     {
         $captions = array();
-        for ($i=0; $i<count($this->multilingual_files); $i++)
-        {
+        for ($i=0; $i<count($this->multilingual_files); $i++) {
             $captions[$i] = $this->multilingual_files[$i] . "_caption";
         }
         return $captions;
@@ -233,24 +230,24 @@ class ModelManager extends AbstractManager
     public function getAllNonMultilingualFields()
     {
         return array_merge(
-            $this->booleans,
-            $this->dates,
-            $this->varchars,
-            $this->texts,
-            $this->long_texts,
-            $this->integers,
-            $this->custom_selections,
-            $this->files
+            $this->getBooleans(),
+            $this->getDates(),
+            $this->getVarchars(),
+            $this->getTexts(),
+            $this->getLongTexts(),
+            $this->getIntegers(),
+            $this->getCustomSelections(),
+            $this->getFiles()
         );
     }
 
     public function getAllMultilingualFields()
     {
         return array_merge(
-            $this->multilingual_varchars,
-            $this->multilingual_texts,
-            $this->multilingual_long_texts,
-            $this->multilingual_files,
+            $this->getMultilingualVarchars(),
+            $this->getMultilingualTexts(),
+            $this->getMultilingualLongTexts(),
+            $this->getMultilingualFiles(),
             $this->getMultilingualFilesCaptions()
         );
     }
@@ -258,25 +255,25 @@ class ModelManager extends AbstractManager
     public function getSimpleFields()
     {
         $simpleFields = array_merge(
-            $this->dates,
-            $this->varchars,
-            $this->booleans,
-            $this->integers,
-            $this->texts,
-            $this->multilingual_varchars,
-            $this->multilingual_texts
+            $this->getDates(),
+            $this->getVarchars(),
+            $this->getBooleans(),
+            $this->getIntegers(),
+            $this->getTexts(),
+            $this->getMultilingualVarchars(),
+            $this->getMultilingualTexts()
         );
         return $simpleFields;
     }
 
     public function getAdvancedFields()
     {
-        return array_merge($this->long_texts, $this->multilingual_long_texts);
+        return array_merge($this->getLongTexts(), $this->getMultilingualLongTexts());
     }
 
     public function getAllFileFields()
     {
-        return array_merge($this->files, $this->multilingual_files);
+        return array_merge($this->getFiles(), $this->getMultilingualFiles());
     }
 
     public function getAllFields()
@@ -292,11 +289,11 @@ class ModelManager extends AbstractManager
     {
         $fields = array(
             'id'      => array('id'),
-            'date'    => $this->dates,
-            'varchar' => array_merge($this->varchars, $this->files, $this->getFileCaptions()),
-            'boolean' => $this->booleans,
-            'integer' => array_merge($this->integers, $this->getRelationFields(),$this->getCustomSelectionFields()),
-            'text'    => array_merge($this->texts,$this->long_texts),
+            'date'    => $this->getDates(),
+            'varchar' => array_merge($this->getVarchars(), $this->getFiles(), $this->getFileCaptions()),
+            'boolean' => $this->getBooleans(),
+            'integer' => array_merge($this->getIntegers(), $this->getRelationFields(),$this->getCustomSelectionFields()),
+            'text'    => array_merge($this->getTexts(),$this->getLongTexts()),
         );
 
         $columnsWithTypes = array();
@@ -314,13 +311,13 @@ class ModelManager extends AbstractManager
             array('id'),
             $this->getRelationFields(),
             $this->getCustomSelectionFields(),
-            $this->dates,
-            $this->varchars,
-            $this->booleans,
-            $this->integers,
-            $this->texts,
-            $this->long_texts,
-            $this->files,
+            $this->getDates(),
+            $this->getVarchars(),
+            $this->getBooleans(),
+            $this->getIntegers(),
+            $this->getTexts(),
+            $this->getLongTexts(),
+            $this->getFiles(),
             $this->getFileCaptions()
         );
         return $fields;

@@ -131,8 +131,12 @@ class ModelHandler
 
     private function initialiseModelParentLookupTable()
     {
-        $gateway =  new CmsTableGateway($this->parentManager->getTableName(), $this->adapter);
-        return new ParentLookupTable($gateway, $this->parentManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
+        if ($this->parentManager->requiresTable()) {
+            $gateway =  new CmsTableGateway($this->parentManager->getTableName(), $this->adapter);
+            return new ParentLookupTable($gateway, $this->parentManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
+        } else {
+            return false;
+        }
     }
 
     private function initialiseTranslationTable()
