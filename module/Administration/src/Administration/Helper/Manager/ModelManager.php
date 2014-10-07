@@ -169,10 +169,25 @@ class ModelManager extends AbstractManager
     public function getMetaFields()
     {
         return array(
-            $this->getPrefix() . 'meta_title',
-            $this->getPrefix() . 'meta_slug',
-            $this->getPrefix() . 'meta_description'
+            $this->getMetaTitleFieldName(),
+            $this->getMetaSlugFieldName(),
+            $this->getMetaDescriptionFieldName()
         );
+    }
+
+    public function getMetaTitleFieldName()
+    {
+        return $this->getPrefix() . 'meta_title';
+    }
+
+    public function getMetaSlugFieldName()
+    {
+        return $this->getPrefix() . 'meta_slug';
+    }
+
+    public function getMetaDescriptionFieldName()
+    {
+        return $this->getPrefix() . 'meta_description';
     }
 
     public function getMultilingualLongTexts()

@@ -2,10 +2,11 @@
 /**
  *Example configuration array for a model
  */
+$modelManager = $this->modelManager;
 return array(
     "model"         => "example",
     "prefix"        => "example_",
-    "stand_alone"   => false,
+    "stand_alone"   => true,
     "model_db_sync" => true,
     "fields" => array(
         "dates"                   => array('pipes_date'),

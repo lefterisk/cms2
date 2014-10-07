@@ -5,6 +5,7 @@ use Administration\Helper\DbGateway\CmsTableGateway;
 use Administration\Helper\DbGateway\ModelTable;
 use Administration\Helper\DbGateway\ParentLookupTable;
 use Administration\Helper\DbGateway\TranslationTable;
+use Administration\Helper\Filter\SlugFilter;
 use Administration\Helper\Manager\ModelManager;
 use Administration\Helper\Manager\ParentManager;
 use Administration\Helper\Manager\TranslationManager;
@@ -331,6 +332,24 @@ class ModelHandler
                     $languageId = $languageId[0];
                     $translationTableFields[$languageId][$actualName] = $fieldValue;
                 }
+
+                //Automatically create slugs for standalone pages if not set in form
+                if ($this->getModelManager()->isStandAlonePage()) {
+                    if ($actualName == $this->getModelManager()->getMetaSlugFieldName()) {
+                        $languageId = explode(']', $actualNameParts[1]);
+                        $languageId = $languageId[0];
+                        $slugFilter = new SlugFilter();
+                        if (empty($fieldValue) && !empty($data[$this->getModelManager()->getMetaTitleFieldName() . '[' . $languageId . ']'])) {
+                            //If meta-slug is not set but meta-title is create slug from title
+                            $translationTableFields[$languageId][$actualName] = $slugFilter->filter($data[$this->getModelManager()->getMetaTitleFieldName() . '[' . $languageId . ']']);
+                        } elseif (empty($fieldValue)) {
+                            //If neither meta-slug or meta-title are set create a random slug
+                            $translationTableFields[$languageId][$actualName] = md5(rand());
+                        } else {
+                            $translationTableFields[$languageId][$actualName] = $slugFilter->filter($fieldValue);
+                        }
+                    }
+                }
             }
             if (in_array($fieldName, $relationsTablesToFields)) {
                 foreach ($relationsTablesToFields as $table => $field) {
@@ -367,7 +386,7 @@ class ModelHandler
                 $fields = array_merge(
                     $fields,
                     array(
-                        $this->getModelManager()->getPrefix() . 'id' =>  $this->getModelTable()->getLastInsertValue(),
+                        $this->getModelManager()->getPrefix() . 'id' => $this->getModelTable()->getLastInsertValue(),
                         'language_id' => $languageId
                     )
                 );
