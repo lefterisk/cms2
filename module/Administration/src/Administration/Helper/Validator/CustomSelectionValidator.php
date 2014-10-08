@@ -48,12 +48,6 @@ class CustomSelectionValidator extends AbstractValidator
                         }
                         if (!array_key_exists( 'options', $definitionArray) || !is_array($definitionArray['options'])) {
                             $this->errors[] = sprintf($this->errorMsgArray['ERROR_4'], $definitionArray['name']);
-                        } else {
-//                            foreach ($definitionArray['options'] as $key => $option) {
-//                                if (!is_int($key)) {
-//                                    $this->errors[] = sprintf($this->errorMsgArray['ERROR_8'], $definitionArray['name']);
-//                                }
-//                            }
                         }
                         if (!array_key_exists( 'multiple', $definitionArray) || !is_bool($definitionArray['multiple'])) {
                             $this->errors[] = sprintf($this->errorMsgArray['ERROR_5'], $definitionArray['name']);

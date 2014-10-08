@@ -41,14 +41,14 @@ class ActionManagerValidator extends AbstractValidator
                     switch ($action) {
                         case "postSelect":
                         case "preSave":
-                            $result = $managerFunction(array());
+                            $result = $managerFunction(array(),null);
                             if (!is_array($result)) {
                                 $this->errors[] = sprintf($this->errorMsgArray['ERROR_4'], $action);
                             }
                             break;
                         case "preDelete":
                         case "preSelect":
-                            $result = $managerFunction(1);
+                            $result = $managerFunction(1,null);
                             if (!is_integer($result)) {
                                 $this->errors[] = sprintf($this->errorMsgArray['ERROR_5'], $action);
                             }

@@ -1,7 +1,9 @@
 <?php
 /**
- *Example configuration array for a model
+ * Configuration array for Site-map model
  */
+
+//Create a list of all standalone models
 $modelHelper  = new \Administration\Helper\ModelHelper();
 $SMOptionsArray = array(0 => '- Not a model -');
 foreach ($this->modelHelper->getAvailableModels() as $model => $fullName) {
@@ -25,7 +27,7 @@ return array(
     "fields" => array(
         "dates"                   => array(),
         "booleans"                => array(),
-        "varchars"                => array('name','slug'),
+        "varchars"                => array('name'),
         "texts"                   => array(),
         "long_texts"              => array(),
         "integers"                => array(),
@@ -45,7 +47,7 @@ return array(
         "relations" => array(
 
         ),
-        "multilingual_varchars"   => array(),
+        "multilingual_varchars"   => array('slug'),
         "multilingual_texts"      => array(),
         "multilingual_long_texts" => array(),
         "multilingual_files"      => array(),
@@ -61,24 +63,26 @@ return array(
 
     ),
     "action_manager" => array(
-        'preSave'    => function($data) {
+        'preSave'    => function($data, $dbAdapter) {
 
             return $data;
         },
-        'postSave'   => function($data) {
-
+        'postSave'   => function($data, $dbAdapter) {
+            $siteMapHelper = new \Administration\Helper\DbGateway\SiteMapHelper($dbAdapter,true);
+            $siteMapHelper->saveRoutes($data);
         },
-        'preSelect'  => function($id) {
+        'preSelect'  => function($id, $dbAdapter) {
             return $id;
         },
-        'postSelect' => function($data) {
+        'postSelect' => function($data, $dbAdapter) {
             return $data;
         },
-        'preDelete'  => function($id) {
+        'preDelete'  => function($id, $dbAdapter) {
             return $id;
         },
-        'postDelete' => function($id) {
-
+        'postDelete' => function($id, $dbAdapter) {
+                $siteMapHelper = new \Administration\Helper\DbGateway\SiteMapHelper($dbAdapter,true);
+                $siteMapHelper->deleteRoutes($id);
         },
     )
 );

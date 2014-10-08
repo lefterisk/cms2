@@ -49,7 +49,7 @@ class ModelHandler
             return;
         }
         $this->modelManager         = new ModelManager($modelDefinitionArray);
-        $this->actionManagerHandler = new ActionManagerHandler($this->getModelManager()->getActionManagers());
+        $this->actionManagerHandler = new ActionManagerHandler($this->getModelManager()->getActionManagers(), $this->adapter);
 
         $this->parentManager        = new ParentManager($this->modelManager);
         $this->parentTable          = $this->initialiseModelParentLookupTable();
@@ -125,14 +125,14 @@ class ModelHandler
 
     private function initialiseMainTable()
     {
-        $gateway =  new CmsTableGateway($this->modelManager->getTableName(), $this->adapter);
+        $gateway = new CmsTableGateway($this->modelManager->getTableName(), $this->adapter);
         return new ModelTable($gateway, $this->modelManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
     }
 
     private function initialiseModelParentLookupTable()
     {
         if ($this->parentManager->requiresTable()) {
-            $gateway =  new CmsTableGateway($this->parentManager->getTableName(), $this->adapter);
+            $gateway = new CmsTableGateway($this->parentManager->getTableName(), $this->adapter);
             return new ParentLookupTable($gateway, $this->parentManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
         } else {
             return false;
@@ -142,7 +142,7 @@ class ModelHandler
     private function initialiseTranslationTable()
     {
         if ($this->translationManager->requiresTable()) {
-            $gateway =  new CmsTableGateway($this->translationManager->getTableName(), $this->adapter);
+            $gateway = new CmsTableGateway($this->translationManager->getTableName(), $this->adapter);
             return new TranslationTable($gateway, $this->translationManager->getTableColumnsDefinition(), $this->modelManager->getModelDbTableSync());
         } else {
             return false;
@@ -183,7 +183,11 @@ class ModelHandler
     {
         foreach($this->customSelectionHandlers as $customSelectionHandler) {
             if ($customSelectionHandler instanceof CustomSelectionHandler && $customSelectionHandler->getCustomSelectionManager()->requiresColumn()) {
-                $this->modelManager->setCustomSelectionField($customSelectionHandler->getCustomSelectionManager()->getColumn());
+                if ($customSelectionHandler->getCustomSelectionManager()->getValueType() == 'varchar') {
+                    $this->modelManager->setCustomSelectionVarcharField($customSelectionHandler->getCustomSelectionManager()->getColumn());
+                } elseif ($customSelectionHandler->getCustomSelectionManager()->getValueType() == 'integer') {
+                    $this->modelManager->setCustomSelectionIntField($customSelectionHandler->getCustomSelectionManager()->getColumn());
+                }
             }
         }
     }
@@ -375,17 +379,27 @@ class ModelHandler
         }
 
         if (isset($data['id']) && !empty($data['id'])) {
+            //save main table
             $this->getModelTable()->save($data['id'], $mainTableFields);
             if ($this->modelManager->getMaximumTreeDepth() > 0) {
+                //save to_parent table
                 $this->parentTable->save($data['id'], $this->getModelManager()->getPrefix() . 'id', $this->parentFieldName, $parentTableField);
             }
             foreach ($translationTableFields as $languageId => $fields) {
+                //save translation tables
                 $this->getTranslationTable()->save($fields, array($this->getModelManager()->getPrefix() . 'id' => $data['id'], 'language_id' => $languageId));
             }
+            //save relation tables
             $this->saveRelationTables($relationTablesFields, $data['id']);
+            //save custom selection tables
             $this->saveCustomSelectionTables($customSelectionTablesFields, $data['id']);
         } else {
+            //save main table
             $this->getModelTable()->save(null, $mainTableFields);
+            if ($this->modelManager->getMaximumTreeDepth() > 0) {
+                //save to_parent table
+                $this->parentTable->save($this->getModelTable()->getLastInsertValue(), $this->getModelManager()->getPrefix() . 'id', $this->parentFieldName, $parentTableField);
+            }
             foreach ($translationTableFields as $languageId => $fields) {
                 $fields = array_merge(
                     $fields,
@@ -394,11 +408,20 @@ class ModelHandler
                         'language_id' => $languageId
                     )
                 );
+                //save translation tables
                 $this->getTranslationTable()->save($fields);
             }
+            //save relation tables
             $this->saveRelationTables($relationTablesFields, $this->getModelTable()->getLastInsertValue());
+            //save custom selection tables
             $this->saveCustomSelectionTables($customSelectionTablesFields, $this->getModelTable()->getLastInsertValue());
+
+            //make sure item id is available in the post-save hook
+            if (!array_key_exists('id', $data) ||  (array_key_exists('id', $data) && empty($data['id']))) {
+                $data['id'] = $this->getModelTable()->getLastInsertValue();
+            }
         }
+
         $this->getActionManagerHandler()->getActionProcessedData('postSave', $data);
     }
 
@@ -504,6 +527,7 @@ class ModelHandler
         try {
             if ($hard) {
                 $rowsAffected = $this->getModelTable()->getTableGateway()->delete(array('id' => $id));
+                $this->getParentTable()->getTableGateway()->delete(array($this->getModelManager()->getPrefix() . 'id' => $id));
                 if ($rowsAffected > 0 && $this->modelManager->isMultiLingual()) {
                     $this->getTranslationTable()->getTableGateway()->delete(array($this->getModelManager()->getPrefix() . 'id' => $id));
                 }

@@ -31,7 +31,8 @@ class ModelManager extends AbstractManager
 
     //relation & custom selections fields
     private $relations_fields = array();
-    private $custom_selection_fields = array();
+    private $custom_selection_varchar_fields = array();
+    private $custom_selection_int_fields = array();
 
     private $generalSettings = array(
         'model',
@@ -290,9 +291,9 @@ class ModelManager extends AbstractManager
         $fields = array(
             'id'      => array('id'),
             'date'    => $this->getDates(),
-            'varchar' => array_merge($this->getVarchars(), $this->getFiles(), $this->getFileCaptions()),
+            'varchar' => array_merge($this->getVarchars(), $this->getFiles(), $this->getFileCaptions(),$this->getCustomSelectionVarcharFields()),
             'boolean' => $this->getBooleans(),
-            'integer' => array_merge($this->getIntegers(), $this->getRelationFields(),$this->getCustomSelectionFields()),
+            'integer' => array_merge($this->getIntegers(), $this->getRelationFields(),$this->getCustomSelectionIntFields()),
             'text'    => array_merge($this->getTexts(),$this->getLongTexts()),
         );
 
@@ -310,7 +311,8 @@ class ModelManager extends AbstractManager
         $fields = array_merge(
             array('id'),
             $this->getRelationFields(),
-            $this->getCustomSelectionFields(),
+            $this->getCustomSelectionVarcharFields(),
+            $this->getCustomSelectionIntFields(),
             $this->getDates(),
             $this->getVarchars(),
             $this->getBooleans(),
@@ -373,9 +375,14 @@ class ModelManager extends AbstractManager
         return $this->relations_fields;
     }
 
-    public function getCustomSelectionFields()
+    public function getCustomSelectionIntFields()
     {
-        return $this->custom_selection_fields;
+        return $this->custom_selection_int_fields;
+    }
+
+    public function getCustomSelectionVarcharFields()
+    {
+        return $this->custom_selection_varchar_fields;
     }
 
     public function setRelationField($field)
@@ -383,9 +390,14 @@ class ModelManager extends AbstractManager
         $this->relations_fields[] = $field;
     }
 
-    public function setCustomSelectionField($field)
+    public function setCustomSelectionVarcharField($field)
     {
-        $this->custom_selection_fields[] = $field;
+        $this->custom_selection_varchar_fields[] = $field;
+    }
+
+    public function setCustomSelectionIntField($field)
+    {
+        $this->custom_selection_int_fields[] = $field;
     }
 
     public function isMultiLingual()

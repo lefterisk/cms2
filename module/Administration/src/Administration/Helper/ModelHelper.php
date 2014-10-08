@@ -6,7 +6,7 @@ use Zend\Code\Scanner\DirectoryScanner;
 
 class ModelHelper
 {
-    private $availableModelsArray = array();
+    private $availableModelsArray  = array();
 
     public function modelExists($model)
     {
