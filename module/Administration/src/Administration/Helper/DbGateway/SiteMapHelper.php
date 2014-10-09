@@ -81,24 +81,34 @@ class SiteMapHelper
             foreach ($this->languageHelper->getLanguages() as $languageId => $language) {
                 foreach ($data['parent_id'] as $parentId) {
 
-                    $results = $this->fetchItemsForParent($model, $languageId, 0);
+                    $parentSiteMapRoute = $this->getCombinedParentUri($parentId, $languageId, $language);
+                    $this->recursiveModelRoute($model, 0, $parentSiteMapRoute, $languageId, $data);
 
-                    foreach ($results as $result) {
-                        $computedRoute = $this->getCombinedParentUri($parentId, $languageId, $language).$result[$model->getModelManager()->getMetaSlugFieldName()];
-                        $route         = $this->routesTable->getRouteByLanguageIdAndSiteMapId($languageId, $data['id'], $result['id'])->current();
-                        $routeData     = array(
-                            'site_map_id'   => $data['id'],
-                            'item_id'       => $result['id'],
-                            'language_id'   => $languageId,
-                            'combined_slug' => $computedRoute
-                        );
-                        if (!$route) {
-                            $this->routesTable->insert($routeData);
-                        } elseif ($route && $route['combined_slug'] != $computedRoute) {
-                            $this->routesTable->update($routeData);
-                        }
-                    }
                 }
+            }
+        }
+    }
+
+    protected function recursiveModelRoute(ModelHandler $model, $modelParent, $parentSiteMapRoute, $languageId, $data)
+    {
+        $results = $this->fetchItemsForParent($model, $languageId, $modelParent);
+
+        foreach ($results as $result) {
+            $route         = $this->routesTable->getRouteByLanguageIdAndSiteMapId($languageId, $data['id'], $result['id'])->current();
+            $computedRoute = $parentSiteMapRoute.$result[$model->getModelManager()->getMetaSlugFieldName()];
+            $routeData     = array(
+                'site_map_id'   => $data['id'],
+                'item_id'       => $result['id'],
+                'language_id'   => $languageId,
+                'combined_slug' => $computedRoute
+            );
+            if (!$route) {
+                $this->routesTable->insert($routeData);
+            } elseif ($route && $route['combined_slug'] != $computedRoute) {
+                $this->routesTable->update($routeData);
+            }
+            if ($model->getModelManager()->getMaximumTreeDepth() > 0 ) {
+                $this->recursiveModelRoute( $model, $result['id'], $computedRoute . '/', $languageId, $data);
             }
         }
     }
@@ -132,7 +142,6 @@ class SiteMapHelper
             $parentId
         );
     }
-
 
     protected function getCombinedParentUri($id, $languageId, $language)
     {
