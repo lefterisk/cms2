@@ -134,7 +134,7 @@ class SiteMapHelper
             );
         }
 
-        return $model->getModelTable()->fetchForListing(
+        return $model->getModelTable()->fetch(
             array('id'),
             $joinDefinitions,
             array('status' => '1'),

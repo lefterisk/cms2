@@ -191,7 +191,7 @@ class FormHandler
             $recursive = true;
         }
 
-        $results = $this->modelHandler->getModelTable()->fetchForListing(
+        $results = $this->modelHandler->getModelTable()->fetch(
             $this->modelHandler->getModelManager()->getTableSpecificListingFields(
                 $this->modelHandler->getModelManager()->getListingFields()
             ),

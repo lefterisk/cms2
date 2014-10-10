@@ -95,7 +95,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
         $model = new ModelHandler($requested_model, $this->getServiceLocator()->get('Zend\Db\Adapter\Adapter'));
         if (!$model->isInitialised()) {
             $this->errors = array_merge($this->errors, $model->getErrors());
-            $viewModel       = new ViewModel(array(
+            $viewModel    = new ViewModel(array(
                 'modelName'  =>  $requested_model,
                 'errors' => $this->errors
             ));

@@ -17,7 +17,6 @@ class ModelHandler
 {
     private $errors                  = array();
     private $initialised             = false;
-    private $parentFieldName         = 'parent_id';
     private $modelManager;
     private $parentManager;
     private $translationManager;
@@ -291,11 +290,6 @@ class ModelHandler
         return array_merge($this->getCustomSelectionFieldsForMainTable(), $this->getCustomSelectionFieldsForCustomSelectionTables());
     }
 
-    public function getParentFieldName()
-    {
-        return $this->parentFieldName;
-    }
-
     public function getOverAllInputFilter()
     {
         //main table input-filter
@@ -503,7 +497,7 @@ class ModelHandler
         if ($this->modelManager->getMaximumTreeDepth() > 0 && $this->getParentManager()->requiresTable()) {
             $parentData = $this->parentTable->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
             foreach ($parentData as $result) {
-                $parentFieldFrame[$this->getParentFieldName()][] = $result->{$this->getParentFieldName()};
+                $parentFieldFrame[$this->parentManager->getFieldName()][] = $result->{$this->parentManager->getFieldName()};
             }
         }
         return $this->getActionManagerHandler()->getActionProcessedData('postSelect', array_merge($mainTableData->getArrayCopy(),$translationData,$relationData,$customSelectionData,$parentFieldFrame));

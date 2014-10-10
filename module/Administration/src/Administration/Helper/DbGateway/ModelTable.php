@@ -7,7 +7,7 @@ use Zend\Db\Sql\Select;
 
 class ModelTable extends AbstractTable
 {
-    public function fetchForListing(Array $mainTableFields = array(), Array $joinsDefinitions = array(), Array $whereDefinitions = array(), $recursive = false, $treeLevel = 0)
+    public function fetch(Array $mainTableFields = array(), Array $joinsDefinitions = array(), Array $whereDefinitions = array(), $recursive = false, $treeLevel = 0)
     {
         $results = $this->tableGateway->select(function (Select $select)  use ($mainTableFields, $joinsDefinitions, $whereDefinitions) {
 
@@ -38,7 +38,7 @@ class ModelTable extends AbstractTable
             $resultArray[]        = $result;
             if ($recursive) {
                 $whereDefinitions['parent_id'] = $result->id;
-                $resultArray = array_merge($resultArray, $this->fetchForListing($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
+                $resultArray = array_merge($resultArray, $this->fetch($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
             }
         }
 

@@ -41,7 +41,7 @@ class ModelBreadCrumbHandler
 
         $additionalWhereStatements['id'] = $id;
 
-        $result = $this->modelHandler->getModelTable()->fetchForListing(
+        $result = $this->modelHandler->getModelTable()->fetch(
             $this->modelHandler->getModelManager()->getTableSpecificListingFields(
                 $this->modelHandler->getModelManager()->getListingFields()
             ),
