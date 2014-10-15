@@ -2,6 +2,7 @@
 namespace Administration\Helper;
 
 use Administration\Helper\DbGateway\SiteLanguageHelper;
+use Zend\Db\Sql\Expression;
 
 class ListingHandler
 {
@@ -25,15 +26,20 @@ class ListingHandler
         }
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
-            $joinDefinitions[] = $this->getParentTableJoinDefinition();
-            $additionalWhereStatements['parent_id'] = $parent;
+            $joinDefinitions = array_merge($joinDefinitions, $this->getParentTableJoinDefinition($parent));
             $recursive = false;
         }
 
+        $returnFields = $this->modelHandler->getModelManager()->getTableSpecificListingFields(
+            $this->modelHandler->getModelManager()->getListingFields()
+        );
+
+        if ($this->modelHandler->getParentManager()->requiresTable()) {
+            $returnFields = array_merge(array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` SEPARATOR ',' ) ")),$returnFields);
+        }
+
         $results = $this->modelHandler->getModelTable()->fetch(
-            $this->modelHandler->getModelManager()->getTableSpecificListingFields(
-                $this->modelHandler->getModelManager()->getListingFields()
-            ),
+            $returnFields,
             $joinDefinitions,
             $additionalWhereStatements,
             $recursive
@@ -66,13 +72,21 @@ class ListingHandler
         );
     }
 
-    protected function getParentTableJoinDefinition()
+    protected function getParentTableJoinDefinition($parent = 0)
     {
         return array(
-            'table_name'          => $this->modelHandler->getParentManager()->getTableName(),
-            'on_field_expression' => $this->modelHandler->getParentManager()->getTableName() . '.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-            'return_fields'       => $this->modelHandler->getParentManager()->getTableSpecificListingFields(array($this->modelHandler->getParentManager()->getFieldName())),
-            'where'               => array()
+            array(
+                'table_name'          => array('p' => $this->modelHandler->getParentManager()->getTableName()),
+                'on_field_expression' => 'p.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
+                'return_fields'       => array_merge($this->modelHandler->getParentManager()->getTableSpecificListingFields(array('p.' . $this->modelHandler->getParentManager()->getFieldName())), array('depth')),
+                'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => $parent)
+            ),
+            array(
+                'table_name'          => array('crumbs' => $this->modelHandler->getParentManager()->getTableName()),
+                'on_field_expression' => 'crumbs.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
+                'return_fields'       => array(),
+                'where'               => array()
+            ),
         );
     }
 }

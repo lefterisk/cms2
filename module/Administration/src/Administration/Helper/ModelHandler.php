@@ -367,7 +367,7 @@ class ModelHandler
                     }
                 }
             }
-            if ($fieldName == $this->parentFieldName) {
+            if ($fieldName == $this->getParentManager()->getFieldName()) {
                 $parentTableField = $fieldValue;
             }
         }
@@ -377,7 +377,7 @@ class ModelHandler
             $this->getModelTable()->save($data['id'], $mainTableFields);
             if ($this->modelManager->getMaximumTreeDepth() > 0) {
                 //save to_parent table
-                $this->parentTable->save($data['id'], $this->getModelManager()->getPrefix() . 'id', $this->parentFieldName, $parentTableField);
+                $this->parentTable->save($data['id'], $this->getModelManager()->getPrefix() . 'id', $this->getParentManager()->getFieldName(), $parentTableField);
             }
             foreach ($translationTableFields as $languageId => $fields) {
                 //save translation tables
@@ -392,7 +392,7 @@ class ModelHandler
             $this->getModelTable()->save(null, $mainTableFields);
             if ($this->modelManager->getMaximumTreeDepth() > 0) {
                 //save to_parent table
-                $this->parentTable->save($this->getModelTable()->getLastInsertValue(), $this->getModelManager()->getPrefix() . 'id', $this->parentFieldName, $parentTableField);
+                $this->parentTable->save($this->getModelTable()->getLastInsertValue(), $this->getModelManager()->getPrefix() . 'id', $this->getParentManager()->getFieldName(), $parentTableField);
             }
             foreach ($translationTableFields as $languageId => $fields) {
                 $fields = array_merge(
@@ -495,10 +495,8 @@ class ModelHandler
 
         $parentFieldFrame = array();
         if ($this->modelManager->getMaximumTreeDepth() > 0 && $this->getParentManager()->requiresTable()) {
-            $parentData = $this->parentTable->getTableGateway()->select(array($this->modelManager->getPrefix() . 'id' => $id));
-            foreach ($parentData as $result) {
-                $parentFieldFrame[$this->parentManager->getFieldName()][] = $result->{$this->parentManager->getFieldName()};
-            }
+            $parentId = $this->parentTable->getParentId($id,$this->modelManager->getPrefix() . 'id', $this->parentManager->getFieldName());//->select(array($this->modelManager->getPrefix() . 'id' => ));
+            $parentFieldFrame[$this->parentManager->getFieldName()] = $parentId;
         }
         return $this->getActionManagerHandler()->getActionProcessedData('postSelect', array_merge($mainTableData->getArrayCopy(),$translationData,$relationData,$customSelectionData,$parentFieldFrame));
     }

@@ -76,7 +76,6 @@ class ModelController extends AbstractActionController implements EventManagerAw
             'listingFields'      => $listingHandler->getListingFieldsDefinitions(),
             'userGroup'          => $this->identity['user_group_name'],
             'permissionHelper'   => $this->acl,
-            'treeView'           => ($model->getModelManager()->getMaximumTreeDepth() > 0) ? true : false,
             'breadCrumbs'        => $breadCrumbs->getBreadCrumbLinksArray($parent)
         ));
     }

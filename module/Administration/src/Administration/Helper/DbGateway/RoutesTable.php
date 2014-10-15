@@ -41,12 +41,8 @@ class RoutesTable extends AbstractTable
         $this->getTableGateway()->delete($data);
     }
 
-    public function getRouteByLanguageIdAndSiteMapId($languageId, $siteMapId, $item = false)
+    public function getRoute($where)
     {
-        $where = array('language_id' => $languageId, 'site_map_id' => $siteMapId);
-        if ($item) {
-            $where['item_id'] = $item;
-        }
         return $this->getTableGateway()->select($where);
     }
 }

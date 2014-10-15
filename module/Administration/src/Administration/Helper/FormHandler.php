@@ -30,7 +30,7 @@ class FormHandler
         $tabManager     = array();
         $firstTabFields = array();
         if ($this->modelHandler->getModelManager()->getMaximumTreeDepth() > 0) {
-            $firstTabFields = array($this->modelHandler->getParentFieldName());
+            $firstTabFields = array($this->modelHandler->getParentManager()->getFieldName());
         }
         $firstTabFields = array_merge(
             $firstTabFields,
@@ -181,14 +181,22 @@ class FormHandler
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
             //parent relation
-            $joinDefinitions[] = array(
-                'table_name'          => $this->modelHandler->getParentManager()->getTableName(),
-                'on_field_expression' => $this->modelHandler->getParentManager()->getTableName() . '.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                'return_fields'       => $this->modelHandler->getParentManager()->getTableSpecificListingFields(array($this->modelHandler->getParentManager()->getFieldName())),
-                'where'               => array()
-            );
-            $additionalWhereStatements['parent_id'] = 0;
-            $recursive = true;
+
+
+            $joinDefinitions = array_merge($joinDefinitions, array(
+                array(
+                    'table_name'          => array('p' => $this->modelHandler->getParentManager()->getTableName()),
+                    'on_field_expression' => 'p.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
+                    'return_fields'       => array_merge($this->modelHandler->getParentManager()->getTableSpecificListingFields(array('p.' . $this->modelHandler->getParentManager()->getFieldName())), array('depth')),
+                    'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => 0)
+                ),
+                array(
+                    'table_name'          => array('crumbs' => $this->modelHandler->getParentManager()->getTableName()),
+                    'on_field_expression' => 'crumbs.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
+                    'return_fields'       => array(),
+                    'where'               => array()
+                ),
+            ));
         }
 
         $results = $this->modelHandler->getModelTable()->fetch(
@@ -196,13 +204,12 @@ class FormHandler
                 $this->modelHandler->getModelManager()->getListingFields()
             ),
             $joinDefinitions,
-            $additionalWhereStatements,
-            $recursive
+            $additionalWhereStatements
         );
 
         foreach ($results as $listingItem) {
             $optionString = '';
-            for ($i = 1; $i <= $listingItem->tree_level; $i++) {
+            for ($i = 1; $i <= $listingItem->depth -1 ; $i++) {
                 if ($i == 1) {
                     $optionString .= '|';
                 }
@@ -221,7 +228,7 @@ class FormHandler
                 'label' => 'parent_id',
                 'value_options' => $value_options,
             ),
-            'attributes' => array('class' => 'form-control', 'multiple' => 'multiple'),
+            'attributes' => array('class' => 'form-control'),
         ));
         return $form;
     }

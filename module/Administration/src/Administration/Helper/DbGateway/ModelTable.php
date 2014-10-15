@@ -10,7 +10,6 @@ class ModelTable extends AbstractTable
     public function fetch(Array $mainTableFields = array(), Array $joinsDefinitions = array(), Array $whereDefinitions = array(), $recursive = false, $treeLevel = 0)
     {
         $results = $this->tableGateway->select(function (Select $select)  use ($mainTableFields, $joinsDefinitions, $whereDefinitions) {
-
             $predicate = new Predicate();
 
             if (count($mainTableFields) > 0) {
@@ -29,20 +28,24 @@ class ModelTable extends AbstractTable
                 }
                 $select->where($predicate);
             }
+
+            $select->group(array($select->getRawState('table').'.id'));
+
+//            var_dump($select->getSqlString());
         });
 
-        $resultArray = array();
+//        $resultArray = array();
         //Recursive call to get children items
-        foreach ($results as $result) {
-            $result['tree_level'] = $treeLevel;
-            $resultArray[]        = $result;
-            if ($recursive) {
-                $whereDefinitions['parent_id'] = $result->id;
-                $resultArray = array_merge($resultArray, $this->fetch($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
-            }
-        }
+//        foreach ($results as $result) {
+//            $result['tree_level'] = $treeLevel;
+//            $resultArray[]        = $result;
+//            if ($recursive) {
+//                $whereDefinitions['parent_id'] = $result->id;
+//                $resultArray = array_merge($resultArray, $this->fetch($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
+//            }
+//        }
 
-        return $resultArray;
+        return $results;
     }
 
     public function fetchForRelationSelect(Array $fields, $where = array())

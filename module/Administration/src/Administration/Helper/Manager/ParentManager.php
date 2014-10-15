@@ -31,16 +31,11 @@ class ParentManager extends AbstractManager
 
     public function getTableColumnsDefinition()
     {
-        $fields = array(
-            'primary' => array($this->model->getPrefix() . 'id', $this->getFieldName()),
+        $columnsWithTypes = array(
+            $this->model->getPrefix() . 'id' => 'primary',
+            $this->getFieldName() => 'primary',
+            'depth' => 'int'
         );
-
-        $columnsWithTypes = array();
-        foreach ($fields as $type => $columns) {
-            foreach ($columns as $column) {
-                $columnsWithTypes[$column] = $type;
-            }
-        }
         return $columnsWithTypes;
     }
 

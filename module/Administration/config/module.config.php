@@ -47,10 +47,9 @@ return array(
                     'model' => array(
                         'type' => 'segment',
                         'options' => array(
-                            'route' => '/model/:model[/parent/:parent][/item/:item][/action/:action][/field/:field/value/:value]',
+                            'route' => '/model/:model[/item/:item][/action/:action][/field/:field/value/:value]',
                             'constraints' => array(
                                 'model'         => '[a-zA-Z][a-zA-Z0-9_-]*',
-                                'parent'        => '[0-9]*',
                                 'item'          => '[0-9_-]*',
                                 //'action'        => '(index|add|edit|save|delete|delete-multiple)',
                                 'action'        => '[a-zA-Z][a-zA-Z0-9_-]*',

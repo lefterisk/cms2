@@ -13,10 +13,14 @@ class SiteMapHelper
     protected $dbAdapter;
     protected $routesTableName = 'routes';
     protected $routesTableColumnDefinitions = array(
-        'site_map_id' => 'int',
-        'item_id' => 'int',
-        'language_id' => 'int',
-        'combined_slug' => 'varchar',
+        'site_map_id'           => 'int',
+        'site_map_parent_id'    => 'int',
+        'route_type'            => 'int',
+        'model'                 => 'varchar',
+        'item_id'               => 'int',
+        'item_parent_id'        => 'int',
+        'language_id'           => 'int',
+        'combined_slug'         => 'varchar',
     );
     protected $routesTable;
     protected $siteMapTable;
@@ -34,7 +38,7 @@ class SiteMapHelper
         unset($gateway);
     }
 
-    public function saveRoutes($data, $model = null)
+    public function saveRoutes($data)
     {
         if (is_array($data) && array_key_exists('type', $data)) {
             if ($data['type'] == '0') {
@@ -57,13 +61,22 @@ class SiteMapHelper
             foreach ($data['parent_id'] as $parentId) {
                 $computedRoute = $this->getCombinedParentUri($parentId, $languageId, $language).$data['slug[' . $languageId . ']'];
 
-                $route = $this->routesTable->getRouteByLanguageIdAndSiteMapId($languageId,$data['id'])->current();
+                $route = $this->routesTable->getRoute(
+                    array(
+                        'language_id' => $languageId,
+                        'site_map_id' => $data['id']
+                    )
+                )->current();
 
                 $routeData = array(
                     'site_map_id' => $data['id'],
+                    'site_map_parent_id' => $parentId,
+                    'model' => null,
                     'item_id' => null,
+                    'item_parent_id' => null,
+                    'route_type' => $data['type'],
                     'language_id' => $languageId,
-                    'combined_slug' => $computedRoute
+                    'combined_slug' => $computedRoute,
                 );
                 if (!$route) {
                     $this->routesTable->insert($routeData);
@@ -76,39 +89,55 @@ class SiteMapHelper
 
     protected function saveRoutesForTypeModel($data)
     {
-        $model = new ModelHandler($data['model'],$this->dbAdapter );
+        $model = new ModelHandler($data['model'], $this->dbAdapter);
         if ($model->isInitialised()) {
             foreach ($this->languageHelper->getLanguages() as $languageId => $language) {
                 foreach ($data['parent_id'] as $parentId) {
+                    $parentModel = $this->parentModel($parentId);
+                    if ($parentModel) {
+                        $parentModelHandler = new ModelHandler($parentModel, $this->dbAdapter);
+                        var_dump($model->getRelationHandlers()[$parentModelHandler->getModelManager()->getPrefix() . 'prefix']);
+                    }
 
-                    $parentSiteMapRoute = $this->getCombinedParentUri($parentId, $languageId, $language);
-                    $this->recursiveModelRoute($model, 0, $parentSiteMapRoute, $languageId, $data);
+                    $results = $this->fetchItemsForParent($model, $languageId, 0);
+                    $parentSiteMapRoute = $this->getCombinedParentUri($parentId, $languageId, $language['code']);
+                    $this->recursiveModelRoute($results, 0, $parentSiteMapRoute, $parentId, $model->getModelManager()->getMetaSlugFieldName(), $languageId, $data);
 
                 }
             }
         }
     }
 
-    protected function recursiveModelRoute(ModelHandler $model, $modelParent, $parentSiteMapRoute, $languageId, $data)
+    protected function recursiveModelRoute($results, $modelParentId, $parentSiteMapRoute, $siteMapParentId, $slugFieldName, $languageId, $data)
     {
-        $results = $this->fetchItemsForParent($model, $languageId, $modelParent);
-
         foreach ($results as $result) {
-            $route         = $this->routesTable->getRouteByLanguageIdAndSiteMapId($languageId, $data['id'], $result['id'])->current();
-            $computedRoute = $parentSiteMapRoute.$result[$model->getModelManager()->getMetaSlugFieldName()];
-            $routeData     = array(
-                'site_map_id'   => $data['id'],
-                'item_id'       => $result['id'],
-                'language_id'   => $languageId,
-                'combined_slug' => $computedRoute
-            );
-            if (!$route) {
-                $this->routesTable->insert($routeData);
-            } elseif ($route && $route['combined_slug'] != $computedRoute) {
-                $this->routesTable->update($routeData);
-            }
-            if ($model->getModelManager()->getMaximumTreeDepth() > 0 ) {
-                $this->recursiveModelRoute( $model, $result['id'], $computedRoute . '/', $languageId, $data);
+            if ($result['parent_id'] == $modelParentId) {
+                $route = $this->routesTable->getRoute(
+                    array(
+                        'language_id' => $languageId,
+                        'site_map_id' => $data['id'],
+                        'site_map_parent_id' => $siteMapParentId,
+                        'item_id' => $result['id'],
+                        'item_parent_id' => $modelParentId,
+                    )
+                )->current();
+                $computedRoute = $parentSiteMapRoute . $result[$slugFieldName];
+                $routeData = array(
+                    'site_map_id' => $data['id'],
+                    'site_map_parent_id' => $siteMapParentId,
+                    'model' => $data['model'],
+                    'item_id' => $result['id'],
+                    'item_parent_id' => $modelParentId,
+                    'route_type' => $data['type'],
+                    'language_id' => $languageId,
+                    'combined_slug' => $computedRoute,
+                );
+                if (!$route) {
+                    $this->routesTable->insert($routeData);
+                } elseif ($route && $route['combined_slug'] != $computedRoute) {
+                    $this->routesTable->update($routeData);
+                }
+                $this->recursiveModelRoute($results, $result['id'], $computedRoute . '/', $siteMapParentId, $slugFieldName, $languageId, $data);
             }
         }
     }
@@ -130,20 +159,32 @@ class SiteMapHelper
                 'table_name'          => $model->getParentManager()->getTableName(),
                 'on_field_expression' => $model->getParentManager()->getTableName() . '.' . $model->getModelManager()->getPrefix() . 'id' . ' = ' . $model->getModelManager()->getTableName() . '.id',
                 'return_fields'       => $model->getParentManager()->getTableSpecificListingFields(array($model->getParentManager()->getFieldName())),
-                'where'               => array('parent_id' => $parentId)
+                'where'               => array()
             );
         }
 
         return $model->getModelTable()->fetch(
             array('id'),
             $joinDefinitions,
-            array('status' => '1'),
-            false,
+            array('status' => '1','parent_id' => $parentId),
+            true,
             $parentId
         );
     }
 
-    protected function getCombinedParentUri($id, $languageId, $language)
+    protected function parentModel($id)
+    {
+        if ($id != '0') {
+            $result = $this->routesTable->getTableGateway()->select(array('site_map_id' => $id))->current();
+            if ($result['route_type'] == 1) {
+                return $result['model'];
+            }
+            return false;
+        }
+        return false;
+    }
+
+    protected function getCombinedParentUri($id, $languageId, $languagePrefix)
     {
         if ($id != '0') {
             $tableName = $this->routesTableName;
@@ -158,7 +199,7 @@ class SiteMapHelper
             if ($languageId == $this->languageHelper->getPrimaryLanguageId()) {
                 return '/';
             } else {
-                return '/' . $language['code'] . '/';
+                return '/' . $languagePrefix . '/';
             }
         }
     }
