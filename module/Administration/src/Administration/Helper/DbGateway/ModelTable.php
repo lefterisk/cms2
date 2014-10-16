@@ -7,9 +7,9 @@ use Zend\Db\Sql\Select;
 
 class ModelTable extends AbstractTable
 {
-    public function fetch(Array $mainTableFields = array(), Array $joinsDefinitions = array(), Array $whereDefinitions = array(), $recursive = false, $treeLevel = 0)
+    public function fetch(Array $mainTableFields = array(), Array $joinsDefinitions = array(), Array $whereDefinitions = array(), Array $orderDefinitions = array())
     {
-        $results = $this->tableGateway->select(function (Select $select)  use ($mainTableFields, $joinsDefinitions, $whereDefinitions) {
+        $results = $this->tableGateway->select(function (Select $select)  use ($mainTableFields, $joinsDefinitions, $whereDefinitions,$orderDefinitions) {
             $predicate = new Predicate();
 
             if (count($mainTableFields) > 0) {
@@ -18,7 +18,7 @@ class ModelTable extends AbstractTable
             }
             if (count($joinsDefinitions) > 0) {
                 foreach ($joinsDefinitions as $join) {
-                    $select->join($join['table_name'], $join['on_field_expression'], $join['return_fields']);
+                    $select->join($join['table_name'], $join['on_field_expression'], $join['return_fields'], Select::JOIN_LEFT);
                     $whereDefinitions = array_merge($whereDefinitions, $join['where']);
                 }
             }
@@ -30,21 +30,9 @@ class ModelTable extends AbstractTable
             }
 
             $select->group(array($select->getRawState('table').'.id'));
-
+            $select->order($orderDefinitions);
 //            var_dump($select->getSqlString());
         });
-
-//        $resultArray = array();
-        //Recursive call to get children items
-//        foreach ($results as $result) {
-//            $result['tree_level'] = $treeLevel;
-//            $resultArray[]        = $result;
-//            if ($recursive) {
-//                $whereDefinitions['parent_id'] = $result->id;
-//                $resultArray = array_merge($resultArray, $this->fetch($mainTableFields, $joinsDefinitions, $whereDefinitions, true, $treeLevel+1));
-//            }
-//        }
-
         return $results;
     }
 

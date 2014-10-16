@@ -19,7 +19,7 @@ class ListingHandler
     {
         $joinDefinitions           = array();
         $additionalWhereStatements = array();
-        $recursive                 = false;
+        $orderStatements           = array();
 
         if ($this->modelHandler->getTranslationManager()->requiresTable()) {
             $joinDefinitions[] = $this->getTranslationTableJoinDefinition($this->languageHelper->getPrimaryLanguageId());
@@ -27,7 +27,6 @@ class ListingHandler
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
             $joinDefinitions = array_merge($joinDefinitions, $this->getParentTableJoinDefinition($parent));
-            $recursive = false;
         }
 
         $returnFields = $this->modelHandler->getModelManager()->getTableSpecificListingFields(
@@ -35,14 +34,15 @@ class ListingHandler
         );
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
-            $returnFields = array_merge(array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` SEPARATOR ',' ) ")),$returnFields);
+            //$returnFields      = array_merge(array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` SEPARATOR ',' ) ")),$returnFields);
+            $orderStatements[] = 'breadcrumbs';
         }
 
         $results = $this->modelHandler->getModelTable()->fetch(
             $returnFields,
             $joinDefinitions,
             $additionalWhereStatements,
-            $recursive
+            $orderStatements
         );
         return $results;
     }
@@ -79,12 +79,12 @@ class ListingHandler
                 'table_name'          => array('p' => $this->modelHandler->getParentManager()->getTableName()),
                 'on_field_expression' => 'p.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
                 'return_fields'       => array_merge($this->modelHandler->getParentManager()->getTableSpecificListingFields(array('p.' . $this->modelHandler->getParentManager()->getFieldName())), array('depth')),
-                'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => $parent)
+                'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => $parent),
             ),
             array(
                 'table_name'          => array('crumbs' => $this->modelHandler->getParentManager()->getTableName()),
                 'on_field_expression' => 'crumbs.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                'return_fields'       => array(),
+                'return_fields'       => array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` SEPARATOR ',' ) ")),
                 'where'               => array()
             ),
         );
