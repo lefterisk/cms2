@@ -23,6 +23,7 @@ class ParentLookupTable extends AbstractTable
 
     public function update($id, $mainModelForeignKey, $parent_field_name, $value)
     {
+        $this->deleteForUpdate($id, $mainModelForeignKey, $parent_field_name);
 //        INSERT `prefix_nodes_paths` (
 //            `ancestor_id`,
 //            `descendant_id`,
@@ -38,15 +39,16 @@ class ParentLookupTable extends AbstractTable
 //        WHERE subtree.`ancestor_id` = `node_old_parent_id`
 //        AND supertree.`descendant_id` = `node_new_parent_id` ;
 
-
-        $this->deleteForUpdate($id, $mainModelForeignKey, $parent_field_name);
         //todo convert this query to ZF2 query
         $sql = "INSERT INTO " . $this->getTableGateway()->getTable() . " (" . $parent_field_name . ", " . $mainModelForeignKey . ", depth) ".
                "SELECT supertree." . $parent_field_name . ", subtree." . $mainModelForeignKey . " , supertree.depth + subtree.depth + 1 ".
                "FROM " . $this->getTableGateway()->getTable() . " AS supertree ".
                "JOIN " . $this->getTableGateway()->getTable() . " AS subtree ".
                "WHERE subtree." . $parent_field_name . " = ? " .
-               "AND supertree." . $mainModelForeignKey . " = ? ";
+               "AND supertree." . $mainModelForeignKey . " = ? ;";
+//        var_dump($id);
+//        var_dump($value);
+//        var_dump($sql);
         $this->getTableGateway()->getAdapter()->query($sql, array($id, $value));
     }
 
@@ -67,8 +69,10 @@ class ParentLookupTable extends AbstractTable
                "JOIN " . $this->getTableGateway()->getTable() . " AS d ON a." . $mainModelForeignKey . " = d." . $mainModelForeignKey . " ".
                "LEFT JOIN " . $this->getTableGateway()->getTable() . " AS x ON x." . $parent_field_name . " = d." . $parent_field_name . " ".
                "AND x." . $mainModelForeignKey . " = a." . $parent_field_name . " ".
-               "WHERE d." . $parent_field_name . " = '?' ".
+               "WHERE d." . $parent_field_name . " = ? ".
                "AND x." . $parent_field_name . " IS NULL;";
+//        var_dump($id);
+//        var_dump($sql);
         $this->getTableGateway()->getAdapter()->query($sql, array($id));
     }
 

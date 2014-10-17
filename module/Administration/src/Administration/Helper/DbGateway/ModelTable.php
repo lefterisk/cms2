@@ -31,7 +31,7 @@ class ModelTable extends AbstractTable
 
             $select->group(array($select->getRawState('table').'.id'));
             $select->order($orderDefinitions);
-//            var_dump($select->getSqlString());
+            var_dump($select->getSqlString());
         });
         return $results;
     }

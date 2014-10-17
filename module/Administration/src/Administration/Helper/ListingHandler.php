@@ -34,7 +34,6 @@ class ListingHandler
         );
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
-            //$returnFields      = array_merge(array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` SEPARATOR ',' ) ")),$returnFields);
             $orderStatements[] = 'breadcrumbs';
         }
 

@@ -2,6 +2,7 @@
 namespace Administration\Helper;
 
 use Administration\Helper\DbGateway\SiteLanguageHelper;
+use Zend\Db\Sql\Expression;
 use Zend\Form\Form;
 
 class FormHandler
@@ -167,7 +168,7 @@ class FormHandler
         $value_options             = array('0' => '---Root Item---');
         $joinDefinitions           = array();
         $additionalWhereStatements = array();
-        $recursive                 = false;
+        $orderStatements           = array();
 
         if ($this->modelHandler->getTranslationManager()->requiresTable()) {
             //translations
@@ -182,21 +183,21 @@ class FormHandler
         if ($this->modelHandler->getParentManager()->requiresTable()) {
             //parent relation
 
-
             $joinDefinitions = array_merge($joinDefinitions, array(
                 array(
                     'table_name'          => array('p' => $this->modelHandler->getParentManager()->getTableName()),
                     'on_field_expression' => 'p.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
                     'return_fields'       => array_merge($this->modelHandler->getParentManager()->getTableSpecificListingFields(array('p.' . $this->modelHandler->getParentManager()->getFieldName())), array('depth')),
-                    'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => 0)
+                    'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => 0),
                 ),
                 array(
                     'table_name'          => array('crumbs' => $this->modelHandler->getParentManager()->getTableName()),
                     'on_field_expression' => 'crumbs.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                    'return_fields'       => array(),
+                    'return_fields'       => array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` SEPARATOR ',' ) ")),
                     'where'               => array()
                 ),
             ));
+            $orderStatements[] = 'breadcrumbs';
         }
 
         $results = $this->modelHandler->getModelTable()->fetch(
@@ -204,7 +205,8 @@ class FormHandler
                 $this->modelHandler->getModelManager()->getListingFields()
             ),
             $joinDefinitions,
-            $additionalWhereStatements
+            $additionalWhereStatements,
+            $orderStatements
         );
 
         foreach ($results as $listingItem) {
