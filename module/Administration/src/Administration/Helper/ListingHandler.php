@@ -35,6 +35,7 @@ class ListingHandler
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
             $orderStatements[] = 'breadcrumbs';
+//            $orderStatements[] = 'depth';
         }
 
         $results = $this->modelHandler->getModelTable()->fetch(

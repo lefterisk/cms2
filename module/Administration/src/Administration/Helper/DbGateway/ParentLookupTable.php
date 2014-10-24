@@ -17,7 +17,12 @@ class ParentLookupTable extends AbstractTable
     public function insert($id, $mainModelForeignKey, $parent_field_name, $value)
     {
         //todo convert this query to ZF2 query
-        $sql = "INSERT INTO " . $this->getTableGateway()->getTable() . " (" . $parent_field_name . ", " . $mainModelForeignKey . ", depth) SELECT " . $parent_field_name.", ? , depth+1 FROM " . $this->getTableGateway()->getTable() . " WHERE " . $mainModelForeignKey . " = ? UNION ALL SELECT ?, ? , 0";
+        $sql = "INSERT INTO " . $this->getTableGateway()->getTable() . " (" . $parent_field_name . ", " . $mainModelForeignKey . ", depth)
+                SELECT " . $parent_field_name.", ? , depth+1
+                FROM " . $this->getTableGateway()->getTable() . "
+                WHERE " . $mainModelForeignKey . " = ?
+                UNION ALL
+                SELECT ?, ? , 0";
         $this->getTableGateway()->getAdapter()->query($sql, array($id, $value, $id, $id));
     }
 
@@ -41,15 +46,22 @@ class ParentLookupTable extends AbstractTable
 
         //todo convert this query to ZF2 query
         $sql = "INSERT INTO " . $this->getTableGateway()->getTable() . " (" . $parent_field_name . ", " . $mainModelForeignKey . ", depth) ".
-               "SELECT supertree." . $parent_field_name . ", subtree." . $mainModelForeignKey . " , supertree.depth + subtree.depth + 1 ".
-               "FROM " . $this->getTableGateway()->getTable() . " AS supertree ".
-               "JOIN " . $this->getTableGateway()->getTable() . " AS subtree ".
-               "WHERE subtree." . $parent_field_name . " = ? " .
-               "AND supertree." . $mainModelForeignKey . " = ? ;";
+               "SELECT supertbl." . $parent_field_name . ", subtbl." . $mainModelForeignKey . ", supertbl.depth + subtbl.depth + 1 ".
+               "FROM " . $this->getTableGateway()->getTable() . " as supertbl ".
+               "CROSS JOIN " . $this->getTableGateway()->getTable() . " as subtbl ".
+               "WHERE supertbl." . $mainModelForeignKey . " = ? ".
+               "AND subtbl." . $parent_field_name . " = ? ;";
+
+//        $sql = "INSERT INTO " . $this->getTableGateway()->getTable() . " (" . $parent_field_name . ", " . $mainModelForeignKey . ", depth) ".
+//               "SELECT supertree." . $parent_field_name . ", subtree." . $mainModelForeignKey . " , supertree.depth + subtree.depth + 1 ".
+//               "FROM " . $this->getTableGateway()->getTable() . " AS supertree ".
+//               "JOIN " . $this->getTableGateway()->getTable() . " AS subtree ".
+//               "WHERE supertree." . $mainModelForeignKey . " = ? " .
+//               "AND subtree." . $parent_field_name . " = ? ;";
 //        var_dump($id);
 //        var_dump($value);
 //        var_dump($sql);
-        $this->getTableGateway()->getAdapter()->query($sql, array($id, $value));
+        $this->getTableGateway()->getAdapter()->query($sql, array($value, $id));
     }
 
     public function deleteForUpdate($id, $mainModelForeignKey, $parent_field_name)
@@ -65,15 +77,30 @@ class ParentLookupTable extends AbstractTable
 //        AND x.`ancestor_id` IS NULL ;
 
         //todo convert this query to ZF2 query
-        $sql = "DELETE a FROM " . $this->getTableGateway()->getTable() . " AS a ".
-               "JOIN " . $this->getTableGateway()->getTable() . " AS d ON a." . $mainModelForeignKey . " = d." . $mainModelForeignKey . " ".
-               "LEFT JOIN " . $this->getTableGateway()->getTable() . " AS x ON x." . $parent_field_name . " = d." . $parent_field_name . " ".
-               "AND x." . $mainModelForeignKey . " = a." . $parent_field_name . " ".
-               "WHERE d." . $parent_field_name . " = ? ".
-               "AND x." . $parent_field_name . " IS NULL;";
+        $sql = "DELETE FROM " . $this->getTableGateway()->getTable() . "
+            WHERE " . $mainModelForeignKey . " IN (
+              SELECT d FROM (
+                SELECT " . $mainModelForeignKey . " as d FROM " . $this->getTableGateway()->getTable() . "
+                WHERE " . $parent_field_name . " = ?
+              ) as dct
+            )
+            AND " . $parent_field_name . " IN (
+              SELECT a FROM (
+                SELECT " . $parent_field_name . " AS a FROM " . $this->getTableGateway()->getTable() . "
+                WHERE " . $mainModelForeignKey . " = ?
+                AND " . $parent_field_name . " <> ?
+              ) as ct
+            )
+        ";
+//        $sql = "DELETE a FROM " . $this->getTableGateway()->getTable() . " AS a ".
+//               "JOIN " . $this->getTableGateway()->getTable() . " AS d ON a." . $mainModelForeignKey . " = d." . $mainModelForeignKey . " ".
+//               "LEFT JOIN " . $this->getTableGateway()->getTable() . " AS x ON x." . $parent_field_name . " = d." . $parent_field_name . " ".
+//               "AND x." . $mainModelForeignKey . " = a." . $parent_field_name . " ".
+//               "WHERE d." . $parent_field_name . " = ? ".
+//               "AND x." . $parent_field_name . " IS NULL;";
 //        var_dump($id);
 //        var_dump($sql);
-        $this->getTableGateway()->getAdapter()->query($sql, array($id));
+        $this->getTableGateway()->getAdapter()->query($sql, array($id,$id,$id));
     }
 
     public function delete($id, $mainModelForeignKey, $parent_field_name)
