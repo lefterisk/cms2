@@ -16,12 +16,12 @@ return array(
         "integers"                => array('pipes_integer'),
         "files"                   => array('pipes_file'),
         "custom_selections"       => array(
-            array(
-                "name"              => "field_name",
-                "options"           => array("0" => "value1", "1" => "value2"),
-                "multiple"          => true,
-                "lookup_table_name" => "example_to_cs"
-            )
+//            array(
+//                "name"              => "field_name",
+//                "options"           => array("0" => "value1", "1" => "value2"),
+//                "multiple"          => true,
+//                "lookup_table_name" => "example_to_cs"
+//            )
         ),
         "relations" => array(
             "field_name" => array(

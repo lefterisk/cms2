@@ -84,7 +84,7 @@ class ListingHandler
             array(
                 'table_name'          => array('crumbs' => $this->modelHandler->getParentManager()->getTableName()),
                 'on_field_expression' => 'crumbs.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                'return_fields'       => array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` SEPARATOR ',' ) ")),
+                'return_fields'       => array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` ORDER BY crumbs.depth DESC SEPARATOR ',' ) ")),
                 'where'               => array()
             ),
         );
