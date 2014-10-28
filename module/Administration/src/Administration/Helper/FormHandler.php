@@ -172,31 +172,13 @@ class FormHandler
 
         if ($this->modelHandler->getTranslationManager()->requiresTable()) {
             //translations
-            $joinDefinitions[] = array(
-                'table_name'          => $this->modelHandler->getTranslationManager()->getTableName(),
-                'on_field_expression' => $this->modelHandler->getTranslationManager()->getTableName() . '.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                'return_fields'       => $this->modelHandler->getTranslationManager()->getTableSpecificListingFields($this->modelHandler->getModelManager()->getListingFields()),
-                'where'               => array('language_id' => $this->languageHelper->getPrimaryLanguageId())
-            );
+            $joinDefinitions[] = $this->modelHandler->getTranslationManager()->getTranslationTableJoinDefinition($this->languageHelper->getPrimaryLanguageId());
         }
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
             //parent relation
 
-            $joinDefinitions = array_merge($joinDefinitions, array(
-                array(
-                    'table_name'          => array('p' => $this->modelHandler->getParentManager()->getTableName()),
-                    'on_field_expression' => 'p.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                    'return_fields'       => array_merge($this->modelHandler->getParentManager()->getTableSpecificListingFields(array('p.' . $this->modelHandler->getParentManager()->getFieldName())), array('depth')),
-                    'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => 0),
-                ),
-                array(
-                    'table_name'          => array('crumbs' => $this->modelHandler->getParentManager()->getTableName()),
-                    'on_field_expression' => 'crumbs.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                    'return_fields'       => array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` ORDER BY crumbs.depth DESC SEPARATOR ',' ) ")),
-                    'where'               => array()
-                ),
-            ));
+            $joinDefinitions = array_merge($joinDefinitions, $this->modelHandler->getParentManager()->getParentTableJoinDefinition(0));
             $orderStatements[] = 'breadcrumbs';
         }
 

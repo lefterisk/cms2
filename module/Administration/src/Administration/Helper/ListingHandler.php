@@ -2,7 +2,6 @@
 namespace Administration\Helper;
 
 use Administration\Helper\DbGateway\SiteLanguageHelper;
-use Zend\Db\Sql\Expression;
 
 class ListingHandler
 {
@@ -22,21 +21,17 @@ class ListingHandler
         $orderStatements           = array();
 
         if ($this->modelHandler->getTranslationManager()->requiresTable()) {
-            $joinDefinitions[] = $this->getTranslationTableJoinDefinition($this->languageHelper->getPrimaryLanguageId());
+            $joinDefinitions[] = $this->modelHandler->getTranslationManager()->getTranslationTableJoinDefinition($this->languageHelper->getPrimaryLanguageId());
         }
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
-            $joinDefinitions = array_merge($joinDefinitions, $this->getParentTableJoinDefinition($parent));
+            $joinDefinitions = array_merge($joinDefinitions, $this->modelHandler->getParentManager()->getParentTableJoinDefinition($parent));
+            $orderStatements[] = 'breadcrumbs';
         }
 
         $returnFields = $this->modelHandler->getModelManager()->getTableSpecificListingFields(
             $this->modelHandler->getModelManager()->getListingFields()
         );
-
-        if ($this->modelHandler->getParentManager()->requiresTable()) {
-            $orderStatements[] = 'breadcrumbs';
-//            $orderStatements[] = 'depth';
-        }
 
         $results = $this->modelHandler->getModelTable()->fetch(
             $returnFields,
@@ -60,33 +55,5 @@ class ListingHandler
             }
         }
         return $fieldDefinitions;
-    }
-
-    protected function getTranslationTableJoinDefinition($languageId)
-    {
-        return array(
-            'table_name'          => $this->modelHandler->getTranslationManager()->getTableName(),
-            'on_field_expression' => $this->modelHandler->getTranslationManager()->getTableName() . '.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-            'return_fields'       => $this->modelHandler->getTranslationManager()->getTableSpecificListingFields($this->modelHandler->getModelManager()->getListingFields()),
-            'where'               => array('language_id' => $languageId)
-        );
-    }
-
-    protected function getParentTableJoinDefinition($parent = 0)
-    {
-        return array(
-            array(
-                'table_name'          => array('p' => $this->modelHandler->getParentManager()->getTableName()),
-                'on_field_expression' => 'p.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                'return_fields'       => array_merge($this->modelHandler->getParentManager()->getTableSpecificListingFields(array('p.' . $this->modelHandler->getParentManager()->getFieldName())), array('depth')),
-                'where'               => array('p.'.$this->modelHandler->getParentManager()->getFieldName() => $parent),
-            ),
-            array(
-                'table_name'          => array('crumbs' => $this->modelHandler->getParentManager()->getTableName()),
-                'on_field_expression' => 'crumbs.' . $this->modelHandler->getModelManager()->getPrefix() . 'id' . ' = ' . $this->modelHandler->getModelManager()->getTableName() . '.id',
-                'return_fields'       => array('breadcrumbs' => new Expression(" GROUP_CONCAT( crumbs.`". $this->modelHandler->getParentManager()->getFieldName() ."` ORDER BY crumbs.depth DESC SEPARATOR ',' ) ")),
-                'where'               => array()
-            ),
-        );
     }
 }

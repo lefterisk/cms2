@@ -61,4 +61,14 @@ class TranslationManager extends AbstractManager
         );
         return $fields;
     }
+
+    public function getTranslationTableJoinDefinition($languageId)
+    {
+        return array(
+            'table_name'          => $this->getTableName(),
+            'on_field_expression' => $this->getTableName() . '.' . $this->model->getPrefix() . 'id' . ' = ' . $this->model->getTableName() . '.id',
+            'return_fields'       => $this->getTableSpecificListingFields($this->model->getListingFields()),
+            'where'               => array('language_id' => $languageId)
+        );
+    }
 }
