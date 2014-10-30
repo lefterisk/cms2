@@ -11,11 +11,13 @@ class FormHandler
     protected $form;
     protected $tabManager = array();
     protected $languageHelper;
+    protected $itemId;
 
-    public function __construct(ModelHandler $modelHandler, SiteLanguageHelper $languageHelper)
+    public function __construct(ModelHandler $modelHandler, SiteLanguageHelper $languageHelper, $itemId = null)
     {
         $this->modelHandler   = $modelHandler;
         $this->languageHelper = $languageHelper;
+        $this->itemId         = $itemId;
 
         if (!is_array($this->modelHandler->getModelManager()->getFormManager()) || count($this->modelHandler->getModelManager()->getFormManager()) <= 0 ) {
             $this->tabManager = $this->getDefaultTabManager();
@@ -169,6 +171,7 @@ class FormHandler
         $joinDefinitions           = array();
         $additionalWhereStatements = array();
         $orderStatements           = array();
+        $itemDescendants           = array();
 
         if ($this->modelHandler->getTranslationManager()->requiresTable()) {
             //translations
@@ -176,8 +179,8 @@ class FormHandler
         }
 
         if ($this->modelHandler->getParentManager()->requiresTable()) {
+            $itemDescendants = $this->getItemDescendantsIds();
             //parent relation
-
             $joinDefinitions = array_merge($joinDefinitions, $this->modelHandler->getParentManager()->getParentTableJoinDefinition(0));
             $orderStatements[] = 'breadcrumbs';
         }
@@ -192,17 +195,20 @@ class FormHandler
         );
 
         foreach ($results as $listingItem) {
-            $optionString = '';
-            for ($i = 1; $i <= $listingItem->depth -1 ; $i++) {
-                if ($i == 1) {
-                    $optionString .= '|';
+            //Omit the item itself and its direct descendants to avoid paradox where item can be its own parent or child of a child element
+            if (!in_array($listingItem->id, $itemDescendants)) {
+                $optionString = '';
+                for ($i = 1; $i <= $listingItem->depth -1 ; $i++) {
+                    if ($i == 1) {
+                        $optionString .= '|';
+                    }
+                    $optionString .= '--';
                 }
-                $optionString .= '--';
+                foreach ($this->modelHandler->getModelManager()->getListingFields() as $listingField) {
+                    $optionString .= $listingItem->{$listingField} . ' ';
+                }
+                $value_options[$listingItem->id] = $optionString;
             }
-            foreach ($this->modelHandler->getModelManager()->getListingFields() as $listingField) {
-                $optionString .= $listingItem->{$listingField} . ' ';
-            }
-            $value_options[$listingItem->id] = $optionString;
         }
 
         $form->add(array(
@@ -215,6 +221,35 @@ class FormHandler
             'attributes' => array('class' => 'form-control'),
         ));
         return $form;
+    }
+
+    protected function getItemDescendantsIds()
+    {
+        $joinDefinitions           = array();
+        $additionalWhereStatements = array();
+        $orderStatements           = array();
+        $ids                       = array();
+
+        if ($this->modelHandler->getParentManager()->requiresTable()) {
+            //parent relation
+            $joinDefinitions = array_merge($joinDefinitions, $this->modelHandler->getParentManager()->getParentTableJoinDefinition($this->itemId));
+            $orderStatements[] = 'breadcrumbs';
+        }
+
+        $results = $this->modelHandler->getModelTable()->fetch(
+            $this->modelHandler->getModelManager()->getTableSpecificListingFields(
+                array('id')
+            ),
+            $joinDefinitions,
+            $additionalWhereStatements,
+            $orderStatements
+        );
+
+        foreach ($results as $listingItem) {
+            $ids[] = $listingItem->id;
+        }
+
+        return $ids;
     }
 
     protected function addRelationFieldsToForm(Form $form)

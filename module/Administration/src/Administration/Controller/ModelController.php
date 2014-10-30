@@ -151,7 +151,7 @@ class ModelController extends AbstractActionController implements EventManagerAw
             return $viewModel->setTemplate('error/admin/model');
         }
 
-        $formManager = new FormHandler($model, $this->getServiceLocator()->get('SiteLanguages'));
+        $formManager = new FormHandler($model, $this->getServiceLocator()->get('SiteLanguages'),$requested_item);
 
         $request = $this->getRequest();
         $form    = $formManager->getForm();
