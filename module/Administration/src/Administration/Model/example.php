@@ -13,7 +13,7 @@ return array(
         "varchars"                => array('pipes1','pipes2','pipes3','pipes4'),
         "texts"                   => array('pipes_text'),
         "long_texts"              => array('pipes_long_test'),
-        "integers"                => array('pipes_integer'),
+        "integers"                => array('pipes_integer', 'pipes_sort_order'),
         "files"                   => array('pipes_file'),
         "custom_selections"       => array(
 //            array(

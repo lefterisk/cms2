@@ -30,11 +30,8 @@ abstract class  AbstractManager
         return $fields;
     }
 
-    public function getInputFilter($inputFilter = null)
+    public function getInputFilter()
     {
-        if (!$inputFilter instanceof InputFilter) {
-            $inputFilter = new InputFilter();
-        }
-        return $inputFilter;
+        return new InputFilter();
     }
 }
